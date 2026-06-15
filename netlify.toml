@@ -1,14 +1,9 @@
-functionsDirectory = "/opt/build/repo/netlify/functions"
-functionsDirectoryOrigin = "default"
 headers = []
 redirects = []
 
 [build]
-publish = "/opt/build/repo/dist/client"
-publishOrigin = "config"
-commandOrigin = "config"
+publish = "dist/client"
 command = "vite build"
-functions = "/opt/build/repo/netlify/functions"
 
   [build.environment]
 
@@ -27,7 +22,7 @@ functions = "/opt/build/repo/netlify/functions"
 [database]
 
   [database.migrations]
-  path = "/opt/build/repo/netlify/database/migrations"
+  path = "netlify/database/migrations"
 
 [dev]
 command = "npm run dev"
