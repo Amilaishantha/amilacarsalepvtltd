@@ -1,6 +1,8 @@
 import { HeadContent, Scripts, createRootRoute, Link } from '@tanstack/react-router'
 import '../styles.css'
 import { useState } from 'react'
+import { site } from '@/data/site'
+import { FacebookIcon } from '@/components/FacebookOffers'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -63,17 +65,40 @@ function NavBar() {
         </Link>
 
         {/* Desktop Nav */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2.5rem' }} className="hidden-mobile">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.75rem' }} className="hidden-mobile">
           <Link to="/" className="nav-link" activeProps={{ className: 'nav-link active' }} activeOptions={{ exact: true }}>Home</Link>
           <Link to="/marketplace" className="nav-link" activeProps={{ className: 'nav-link active' }}>Marketplace</Link>
           <Link to="/tax-calculator" className="nav-link" activeProps={{ className: 'nav-link active' }}>Tax Calculator</Link>
           <Link to="/contact" className="nav-link" activeProps={{ className: 'nav-link active' }}>Contact</Link>
+          <a
+            href={site.facebookUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              background: '#1877F2',
+              color: '#fff',
+              padding: '0.5rem 1rem',
+              textDecoration: 'none',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+            }}
+            title={`${site.name} on Facebook`}
+          >
+            <FacebookIcon size={14} />
+            {site.facebookLabel}
+          </a>
           <Link to="/admin" className="nav-link" activeProps={{ className: 'nav-link active' }} style={{ opacity: 0.5, fontSize: '0.75rem' }}>Admin</Link>
         </div>
 
         {/* Phone */}
         <a
-          href="tel:+94754543533"
+          href={`tel:${site.phoneIntl}`}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -89,7 +114,7 @@ function NavBar() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
             <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.01L6.6 10.8z"/>
           </svg>
-          075 454 3533
+          {site.phoneDisplay}
         </a>
 
         {/* Mobile burger */}
@@ -127,8 +152,31 @@ function NavBar() {
           <Link to="/marketplace" className="nav-link" onClick={() => setMenuOpen(false)}>Marketplace</Link>
           <Link to="/tax-calculator" className="nav-link" onClick={() => setMenuOpen(false)}>Tax Calculator</Link>
           <Link to="/contact" className="nav-link" onClick={() => setMenuOpen(false)}>Contact</Link>
+          <a
+            href={site.facebookUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setMenuOpen(false)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              background: '#1877F2',
+              color: '#fff',
+              padding: '0.75rem 1rem',
+              textDecoration: 'none',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+            }}
+          >
+            <FacebookIcon size={15} />
+            {site.facebookLabel}
+          </a>
           <Link to="/admin" className="nav-link" onClick={() => setMenuOpen(false)} style={{ opacity: 0.5, fontSize: '0.8rem' }}>Admin</Link>
-          <a href="tel:+94754543533" style={{ color: 'var(--gold)', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'none' }}>075 454 3533</a>
+          <a href={`tel:${site.phoneIntl}`} style={{ color: 'var(--gold)', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'none' }}>{site.phoneDisplay}</a>
         </div>
       )}
     </nav>
@@ -179,13 +227,42 @@ function Footer() {
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                 <span style={{ color: 'var(--gold)' }}>📞</span>
-                <a href="tel:+94754543533" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>075 454 3533</a>
+                <a href={`tel:${site.phoneIntl}`} style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>{site.phoneDisplay}</a>
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                 <span style={{ color: 'var(--gold)' }}>✉️</span>
-                <a href="mailto:amilacarsale1pvtltd2@gmail.com" style={{ color: 'var(--text-muted)', textDecoration: 'none', wordBreak: 'break-all' }}>amilacarsale1pvtltd2@gmail.com</a>
+                <a href={`mailto:${site.email}`} style={{ color: 'var(--text-muted)', textDecoration: 'none', wordBreak: 'break-all' }}>{site.email}</a>
               </div>
             </div>
+          </div>
+
+          {/* Facebook */}
+          <div>
+            <div className="section-tag" style={{ marginBottom: '1rem' }}>Facebook</div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.7, margin: '0 0 1rem' }}>
+              New arrivals and offer prices are posted to our Facebook page first.
+            </p>
+            <a
+              href={site.facebookUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                background: '#1877F2',
+                color: '#fff',
+                padding: '0.7rem 1.2rem',
+                textDecoration: 'none',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+              }}
+            >
+              <FacebookIcon size={15} />
+              {site.facebookLabel}
+            </a>
           </div>
         </div>
 

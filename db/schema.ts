@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp } from "drizzle-orm/pg-core";
 
 export const vehicles = pgTable("vehicles", {
   id: serial("id").primaryKey(),
@@ -18,4 +18,16 @@ export const vehicles = pgTable("vehicles", {
   description: text("description").notNull().default(""),
   status: text("status").notNull().default("Available"),
   grade: text("grade").notNull().default(""),
+});
+
+export const enquiries = pgTable("enquiries", {
+  id: serial("id").primaryKey(),
+  vehicleId: integer("vehicle_id"),
+  vehicleTitle: text("vehicle_title").notNull().default(""),
+  vehicleImage: text("vehicle_image").notNull().default(""),
+  vehiclePrice: integer("vehicle_price"),
+  customerName: text("customer_name").notNull(),
+  customerPhone: text("customer_phone").notNull(),
+  customerMessage: text("customer_message").notNull().default(""),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
