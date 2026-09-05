@@ -101,3 +101,74 @@ export const updateVehicleStatus = createServerFn({ method: 'POST' })
       .returning()
     return parseRow(updated as Record<string, unknown>)
   })
+
+export type EnquiryRow = {
+  id: number
+  vehicleId: number | null
+  vehicleTitle: string
+  vehicleImage: string
+  vehiclePrice: number | null
+  customerName: string
+  customerPhone: string
+  customerMessage: string
+  createdAt: string
+}
+
+export type NewEnquiry = Omit<EnquiryRow, 'id' | 'createdAt'>
+
+export const saveEnquiry = createServerFn({ method: 'POST' })
+  .inputValidator((d: NewEnquiry) => d)
+  .handler(async ({ data }) => {
+    if (!data.customerName.trim() || !data.customerPhone.trim()) {
+      throw new Error('Name and phone are required')
+    }
+    try {
+      const { db } = await import('../../db/index.js')
+      const { enquiries } = await import('../../db/schema.js')
+      const [inserted] = await db
+        .insert(enquiries)
+        .values({
+          vehicleId: data.vehicleId,
+          vehicleTitle: data.vehicleTitle.slice(0, 300),
+          vehicleImage: data.vehicleImage.slice(0, 600),
+          vehiclePrice: data.vehiclePrice,
+          customerName: data.customerName.trim().slice(0, 120),
+          customerPhone: data.customerPhone.trim().slice(0, 40),
+          customerMessage: data.customerMessage.trim().slice(0, 1500),
+        })
+        .returning()
+      return { saved: true, id: (inserted as { id: number }).id }
+    } catch {
+      // The customer's WhatsApp hand-off must never be blocked by a storage hiccup.
+      return { saved: false, id: null }
+    }
+  })
+
+export const fetchEnquiries = createServerFn({ method: 'POST' })
+  .inputValidator((d: { adminKey: string }) => d)
+  .handler(async ({ data }) => {
+    if (data.adminKey !== (process.env.ADMIN_KEY ?? '')) throw new Error('Unauthorized')
+    try {
+      const { db } = await import('../../db/index.js')
+      const { enquiries } = await import('../../db/schema.js')
+      const { desc } = await import('drizzle-orm')
+      const rows = await db.select().from(enquiries).orderBy(desc(enquiries.createdAt))
+      return rows.map(row => ({
+        ...(row as Omit<EnquiryRow, 'createdAt'>),
+        createdAt: new Date((row as { createdAt: Date }).createdAt).toISOString(),
+      })) as EnquiryRow[]
+    } catch {
+      return [] as EnquiryRow[]
+    }
+  })
+
+export const deleteEnquiry = createServerFn({ method: 'POST' })
+  .inputValidator((d: { adminKey: string; id: number }) => d)
+  .handler(async ({ data }) => {
+    if (data.adminKey !== (process.env.ADMIN_KEY ?? '')) throw new Error('Unauthorized')
+    const { db } = await import('../../db/index.js')
+    const { enquiries } = await import('../../db/schema.js')
+    const { eq } = await import('drizzle-orm')
+    await db.delete(enquiries).where(eq(enquiries.id, data.id))
+    return { success: true }
+  })

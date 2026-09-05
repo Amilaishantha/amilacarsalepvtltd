@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { fetchVehicles, type VehicleRow } from '@/lib/vehicle-fns'
+import FacebookOffers from '@/components/FacebookOffers'
 
 export const Route = createFileRoute('/')({
   loader: () => fetchVehicles(),
@@ -296,6 +297,9 @@ function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* ── FACEBOOK OFFERS ── */}
+      <FacebookOffers />
 
       {/* ── TAX CALCULATOR BANNER ── */}
       <section style={{

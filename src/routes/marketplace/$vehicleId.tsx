@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { fetchVehicleById, type VehicleRow } from '@/lib/vehicle-fns'
+import VehicleEnquiryForm from '@/components/VehicleEnquiryForm'
+import { site } from '@/data/site'
 
 export const Route = createFileRoute('/marketplace/$vehicleId')({
   loader: ({ params }) => fetchVehicleById({ data: { id: Number(params.vehicleId) } }),
@@ -19,10 +21,6 @@ function VehicleDetailPage() {
       </main>
     )
   }
-
-  const whatsappMsg = encodeURIComponent(
-    `Hello Amila Car Sale, I'm interested in the ${vehicle.year} ${vehicle.make} ${vehicle.model} (ID: ${vehicle.id}) listed at Rs. ${vehicle.price.toLocaleString('en-LK')}. Please share more details.`
-  )
 
   return (
     <main style={{ minHeight: '100vh' }}>
@@ -124,7 +122,7 @@ function VehicleDetailPage() {
           </div>
 
           {/* Right: Price card + enquiry */}
-          <div style={{ position: 'sticky', top: '90px' }}>
+          <div>
             <div style={{
               background: 'var(--dark-2)',
               border: '1px solid var(--border)',
@@ -141,9 +139,7 @@ function VehicleDetailPage() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
                 <a
-                  href={`https://wa.me/94754543533?text=${whatsappMsg}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="#enquire"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -167,14 +163,14 @@ function VehicleDetailPage() {
                 </a>
 
                 <a
-                  href="tel:+94754543533"
+                  href={`tel:${site.phoneIntl}`}
                   className="btn-outline"
                   style={{ textAlign: 'center', justifyContent: 'center' }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.01L6.6 10.8z"/>
                   </svg>
-                  Call: 075 454 3533
+                  Call: {site.phoneDisplay}
                 </a>
               </div>
 
@@ -182,6 +178,11 @@ function VehicleDetailPage() {
                 <div style={{ marginBottom: '0.5rem', fontWeight: 600, color: 'var(--text-muted)' }}>Amila Car Sale Pvt Ltd</div>
                 Bandarawela, Uva Province, Sri Lanka
               </div>
+            </div>
+
+            {/* Enquiry form — sends vehicle details + photo to the showroom WhatsApp */}
+            <div id="enquire" style={{ scrollMarginTop: '90px', marginBottom: '1rem' }}>
+              <VehicleEnquiryForm vehicle={vehicle} />
             </div>
 
             {/* Tax calculator CTA */}

@@ -25,7 +25,11 @@ public/
   logo.png                 # Company logo
   placeholder.png          # Vehicle image placeholder (replace with real photos)
 src/
+  components/
+    VehicleEnquiryForm.tsx # Enquiry form — saves the enquiry, then opens WhatsApp pre-filled
+    FacebookOffers.tsx     # Homepage Facebook panel + shared FacebookIcon
   data/
+    site.ts                # Company contact details, Facebook URL, absoluteUrl() helper
     vehicles.ts            # Vehicle inventory typed array — edit to add/update stock
   routes/
     __root.tsx             # Nav + Footer shell for all pages
@@ -42,6 +46,13 @@ src/
 
 ### Vehicle Data
 All vehicles are in `src/data/vehicles.ts` as a typed array. To add stock: add an entry. To mark sold: set `status: 'Sold'`. For real vehicle photos, place images in `public/` and update the `image` field.
+
+### Vehicle Enquiries
+A customer submits `VehicleEnquiryForm` on a vehicle page. The enquiry is written to the `enquiries`
+table via `saveEnquiry` in `src/lib/vehicle-fns.ts`, then WhatsApp opens with the full vehicle
+specification, photo URL, listing URL and the customer's details pre-written — the customer presses
+send and the showroom receives it on WhatsApp. Storage failures are swallowed on purpose so the
+WhatsApp hand-off is never blocked. Saved enquiries are listed on the Admin page.
 
 ### Tax Calculator
 All XID gazette rate logic is pure JavaScript inside `src/routes/tax-calculator.tsx`. The `getCCRate()` and `getEVRate()` functions contain the rate tables. Update these when the Sri Lanka Customs Gazette is revised.
@@ -62,6 +73,7 @@ Ecommerce template was used as a starting point but Stripe/payments were removed
 - **Phone**: 075 454 3533 (+94754543533)
 - **Email**: amilacarsale1pvtltd2@gmail.com
 - **Location**: Bandarawela, Uva Province, Sri Lanka
+- **Facebook**: https://www.facebook.com/amilacarsale (linked as "Click for More Offers")
 
 ## Conventions
 
@@ -69,3 +81,4 @@ Ecommerce template was used as a starting point but Stripe/payments were removed
 - Route components are self-contained (loader + component in one file)
 - TypeScript strict — use the `Vehicle` type from `src/data/vehicles.ts`
 - `@/` path alias maps to `src/`
+- Contact details and the Facebook URL live in `src/data/site.ts` — never hard-code them again

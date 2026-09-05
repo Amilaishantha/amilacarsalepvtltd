@@ -6,8 +6,11 @@ import {
   deleteVehicle,
   updateVehicleStatus,
   verifyAdminKey,
+  fetchEnquiries,
+  deleteEnquiry,
   type VehicleRow,
   type NewVehicle,
+  type EnquiryRow,
 } from '@/lib/vehicle-fns'
 
 export const Route = createFileRoute('/admin/')({
@@ -91,6 +94,10 @@ function AdminPage() {
 
   const [statusChanging, setStatusChanging] = useState<number | null>(null)
 
+  const [enquiries, setEnquiries] = useState<EnquiryRow[]>([])
+  const [enquiriesLoading, setEnquiriesLoading] = useState(false)
+  const [deletingEnquiryId, setDeletingEnquiryId] = useState<number | null>(null)
+
   useEffect(() => {
     const stored = sessionStorage.getItem('admin_key')
     if (stored) {
@@ -100,7 +107,10 @@ function AdminPage() {
   }, [])
 
   useEffect(() => {
-    if (isAuthed) loadVehicles()
+    if (isAuthed) {
+      loadVehicles()
+      loadEnquiries()
+    }
   }, [isAuthed])
 
   async function handleLogin(e: React.FormEvent) {
@@ -130,6 +140,33 @@ function AdminPage() {
       setError('Failed to load vehicles.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function loadEnquiries() {
+    setEnquiriesLoading(true)
+    try {
+      const stored = sessionStorage.getItem('admin_key') ?? adminKey
+      setEnquiries(await fetchEnquiries({ data: { adminKey: stored } }))
+    } catch {
+      setError('Failed to load enquiries.')
+    } finally {
+      setEnquiriesLoading(false)
+    }
+  }
+
+  async function handleDeleteEnquiry(id: number) {
+    if (!confirm('Delete this enquiry?')) return
+    setDeletingEnquiryId(id)
+    try {
+      await deleteEnquiry({ data: { adminKey, id } })
+      setEnquiries(prev => prev.filter(e => e.id !== id))
+      setSuccess('Enquiry deleted.')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch {
+      setError('Failed to delete enquiry.')
+    } finally {
+      setDeletingEnquiryId(null)
     }
   }
 
@@ -369,6 +406,109 @@ function AdminPage() {
             </form>
           </div>
         )}
+
+        {/* Customer Enquiries */}
+        <div style={{ marginBottom: '2.5rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '1.25rem' }}>
+            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
+              Customer Enquiries
+              <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: 'var(--gold)', marginLeft: '0.75rem', letterSpacing: '0.08em' }}>
+                {enquiries.length}
+              </span>
+            </h2>
+            <button onClick={loadEnquiries} className="btn-outline" style={{ fontSize: '0.75rem', padding: '0.5rem 1rem' }}>
+              {enquiriesLoading ? 'Refreshing…' : '↻ Refresh'}
+            </button>
+          </div>
+
+          {enquiriesLoading && enquiries.length === 0 ? (
+            <div style={{ background: 'var(--dark-2)', border: '1px solid var(--border)', padding: '2rem', color: 'var(--text-dim)', fontSize: '0.85rem' }}>
+              Loading enquiries…
+            </div>
+          ) : enquiries.length === 0 ? (
+            <div style={{ background: 'var(--dark-2)', border: '1px solid var(--border)', padding: '2rem', color: 'var(--text-dim)', fontSize: '0.85rem', lineHeight: 1.7 }}>
+              No enquiries yet. When a customer submits the enquiry form on a vehicle page, it appears here and is sent
+              to your WhatsApp.
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: '1rem' }}>
+              {enquiries.map(enq => (
+                <div key={enq.id} style={{ background: 'var(--dark-2)', border: '1px solid var(--border)', padding: '1.25rem', display: 'flex', flexWrap: 'wrap', gap: '1.25rem', alignItems: 'flex-start' }}>
+                  {enq.vehicleImage && (
+                    <img
+                      src={enq.vehicleImage}
+                      alt={enq.vehicleTitle}
+                      style={{ width: '110px', height: '76px', objectFit: 'cover', border: '1px solid var(--border)', flexShrink: 0 }}
+                    />
+                  )}
+
+                  <div style={{ flex: '1 1 260px', minWidth: 0 }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.2rem' }}>
+                      {enq.customerName}
+                    </div>
+                    <a
+                      href={`tel:${enq.customerPhone.replace(/[^+\d]/g, '')}`}
+                      style={{ fontSize: '0.82rem', color: 'var(--gold)', textDecoration: 'none' }}
+                    >
+                      {enq.customerPhone}
+                    </a>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.6rem', lineHeight: 1.6 }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>
+                        {enq.vehicleTitle || 'Vehicle'}
+                      </strong>
+                      {enq.vehiclePrice ? ` · Rs. ${enq.vehiclePrice.toLocaleString('en-LK')}` : ''}
+                      {enq.vehicleId ? ` · Stock #${enq.vehicleId}` : ''}
+                    </div>
+                    {enq.customerMessage && (
+                      <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.6rem', lineHeight: 1.6, borderLeft: '2px solid var(--gold)', paddingLeft: '0.7rem' }}>
+                        {enq.customerMessage}
+                      </div>
+                    )}
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '0.6rem' }}>
+                      {new Date(enq.createdAt).toLocaleString('en-LK')}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
+                    <a
+                      href={`https://wa.me/${enq.customerPhone.replace(/\D/g, '').replace(/^0/, '94')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: '#25D366',
+                        color: '#fff',
+                        padding: '0.55rem 1rem',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        textDecoration: 'none',
+                        textAlign: 'center',
+                      }}
+                    >
+                      Reply on WhatsApp
+                    </a>
+                    <button
+                      onClick={() => handleDeleteEnquiry(enq.id)}
+                      disabled={deletingEnquiryId === enq.id}
+                      style={{
+                        background: 'none',
+                        border: '1px solid var(--border)',
+                        color: 'var(--text-dim)',
+                        padding: '0.5rem 1rem',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      {deletingEnquiryId === enq.id ? 'Deleting…' : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Vehicles Table */}
         {loading ? (
