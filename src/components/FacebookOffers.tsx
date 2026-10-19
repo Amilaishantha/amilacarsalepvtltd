@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { site } from '@/data/site'
 
 export function FacebookIcon({ size = 20 }: { size?: number }) {
@@ -88,66 +89,228 @@ export default function FacebookOffers() {
           </a>
         </div>
 
-        {/* Page card */}
+        <FacebookFeedWindow />
+      </div>
+    </section>
+  )
+}
+
+/** Facebook's Page Plugin accepts widths between 180px and 500px. */
+const FEED_MIN_WIDTH = 180
+const FEED_MAX_WIDTH = 500
+const FEED_HEIGHT = 640
+
+function feedSrc(pageUrl: string, width: number) {
+  const params = new URLSearchParams({
+    href: pageUrl,
+    tabs: 'timeline',
+    width: String(width),
+    height: String(FEED_HEIGHT),
+    small_header: 'false',
+    adapt_container_width: 'true',
+    hide_cover: 'false',
+    show_facepile: 'true',
+  })
+  return `https://www.facebook.com/plugins/page.php?${params}`
+}
+
+function videoSrc(videoUrl: string, width: number) {
+  const params = new URLSearchParams({ href: videoUrl, width: String(width), show_text: 'false' })
+  return `https://www.facebook.com/plugins/video.php?${params}`
+}
+
+/**
+ * Window showing the live Facebook page timeline — the newest posts and videos
+ * appear automatically (videos play inline), so nothing needs updating here.
+ */
+function FacebookFeedWindow() {
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const [width, setWidth] = useState(FEED_MAX_WIDTH)
+  const [tab, setTab] = useState<'posts' | 'videos'>('posts')
+  const hasVideos = site.facebookFeaturedVideos.length > 0
+
+  // The plugin renders at a fixed width, so match it to the window on resize.
+  useEffect(() => {
+    const el = bodyRef.current
+    if (!el) return
+    const update = () => {
+      const w = Math.round(el.clientWidth)
+      setWidth(Math.max(FEED_MIN_WIDTH, Math.min(FEED_MAX_WIDTH, w)))
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    background: 'none',
+    border: 'none',
+    borderBottom: `2px solid ${active ? '#1877F2' : 'transparent'}`,
+    color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+    padding: '0.75rem 0.25rem',
+    fontSize: '0.78rem',
+    fontWeight: 700,
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
+    cursor: 'pointer',
+  })
+
+  return (
+    <div
+      style={{
+        background: 'var(--dark-3)',
+        border: '1px solid var(--border)',
+        boxShadow: '0 25px 60px rgba(0,0,0,0.45)',
+        width: '100%',
+        maxWidth: `${FEED_MAX_WIDTH + 2}px`,
+        justifySelf: 'center',
+      }}
+    >
+      {/* Window title bar */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          padding: '0.75rem 1rem',
+          borderBottom: '1px solid var(--border)',
+          background: 'var(--dark-4)',
+        }}
+      >
+        <div style={{ display: 'flex', gap: '0.35rem' }}>
+          {['#ff5f57', '#febc2e', '#28c840'].map(c => (
+            <span key={c} style={{ width: '10px', height: '10px', borderRadius: '50%', background: c, display: 'block' }} />
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#1877F2', fontSize: '0.78rem', fontWeight: 700, flex: 1, minWidth: 0 }}>
+          <FacebookIcon size={14} />
+          <span style={{ color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            Latest Posts &amp; Videos
+          </span>
+        </div>
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.35rem',
+            fontSize: '0.65rem',
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            color: 'var(--crimson)',
+            textTransform: 'uppercase',
+          }}
+        >
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--crimson)', display: 'block' }} />
+          Live
+        </span>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '1.5rem', padding: '0 1rem', borderBottom: '1px solid var(--border)' }}>
+        <button type="button" style={tabStyle(tab === 'posts')} onClick={() => setTab('posts')}>
+          Latest Posts
+        </button>
+        {hasVideos ? (
+          <button type="button" style={tabStyle(tab === 'videos')} onClick={() => setTab('videos')}>
+            Videos
+          </button>
+        ) : (
+          <a
+            href={`${site.facebookUrl}/videos`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ ...tabStyle(false), textDecoration: 'none' }}
+          >
+            Videos ↗
+          </a>
+        )}
+      </div>
+
+      <div ref={bodyRef} style={{ position: 'relative', background: '#fff', minHeight: `${FEED_HEIGHT}px` }}>
+        {/* Shown if Facebook is blocked (e.g. by a privacy extension) */}
         <a
           href={site.facebookUrl}
           target="_blank"
           rel="noopener noreferrer"
           style={{
-            display: 'block',
-            background: 'var(--dark-3)',
-            border: '1px solid var(--border)',
-            padding: '2rem',
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#1877F2',
+            fontSize: '0.85rem',
+            fontWeight: 600,
             textDecoration: 'none',
-            transition: 'border-color 0.2s ease, transform 0.2s ease',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.borderColor = '#1877F2'
-            e.currentTarget.style.transform = 'translateY(-3px)'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.borderColor = 'var(--border)'
-            e.currentTarget.style.transform = 'translateY(0)'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-            <img src="/logo.png" alt={site.name} style={{ height: '52px', width: 'auto', objectFit: 'contain' }} />
-            <div>
-              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3 }}>
-                {site.name}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#1877F2', fontSize: '0.75rem', fontWeight: 600, marginTop: '0.2rem' }}>
-                <FacebookIcon size={13} />
-                Facebook Page
-              </div>
-            </div>
-          </div>
+          Loading Facebook posts…
+        </a>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
-            {['New stock posted weekly', 'Limited-time offer prices', 'Customer handover photos', 'Direct messages answered daily'].map(item => (
-              <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                <span style={{ color: 'var(--gold)', fontSize: '0.6rem' }}>✦</span>
-                {item}
-              </div>
-            ))}
-          </div>
-
+        {tab === 'posts' || !hasVideos ? (
+          <iframe
+            key={width}
+            title={`${site.name} latest Facebook posts and videos`}
+            src={feedSrc(site.facebookUrl, width)}
+            width={width}
+            height={FEED_HEIGHT}
+            style={{ border: 'none', overflow: 'hidden', display: 'block', position: 'relative', margin: '0 auto' }}
+            scrolling="no"
+            allowFullScreen
+            loading="lazy"
+            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+          />
+        ) : (
           <div
             style={{
-              marginTop: '1.5rem',
-              paddingTop: '1.25rem',
-              borderTop: '1px solid var(--border)',
-              color: '#1877F2',
-              fontSize: '0.8rem',
-              fontWeight: 700,
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
+              position: 'relative',
+              height: `${FEED_HEIGHT}px`,
+              overflowY: 'auto',
+              background: '#fff',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+              padding: '1rem 0',
             }}
           >
-            {site.facebookLabel} →
+            {site.facebookFeaturedVideos.map(url => (
+              <iframe
+                key={`${url}-${width}`}
+                title={`${site.name} Facebook video`}
+                src={videoSrc(url, width)}
+                width={width}
+                height={Math.round((width * 9) / 16)}
+                style={{ border: 'none', overflow: 'hidden', display: 'block', margin: '0 auto', flexShrink: 0 }}
+                scrolling="no"
+                allowFullScreen
+                loading="lazy"
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              />
+            ))}
           </div>
-        </a>
+        )}
       </div>
-    </section>
+
+      <a
+        href={site.facebookUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: 'block',
+          padding: '0.9rem 1rem',
+          borderTop: '1px solid var(--border)',
+          color: '#1877F2',
+          fontSize: '0.78rem',
+          fontWeight: 700,
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
+          textDecoration: 'none',
+          textAlign: 'center',
+        }}
+      >
+        {site.facebookLabel} →
+      </a>
+    </div>
   )
 }

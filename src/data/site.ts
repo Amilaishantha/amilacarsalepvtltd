@@ -7,6 +7,11 @@ export const site = {
   location: 'Bandarawela, Uva Province, Sri Lanka',
   facebookUrl: 'https://www.facebook.com/amilacarsale',
   facebookLabel: 'Click for More Offers',
+  /**
+   * Optional: paste Facebook video links here (e.g. https://www.facebook.com/amilacarsale/videos/123…)
+   * to pin them in the homepage "Videos" tab. Leave empty to link to the page's videos instead.
+   */
+  facebookFeaturedVideos: [] as string[],
 } as const
 
 /** Turns a site-relative image path into an absolute URL so WhatsApp can render its preview. */
