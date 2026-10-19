@@ -27,7 +27,7 @@ public/
 src/
   components/
     VehicleEnquiryForm.tsx # Enquiry form — saves the enquiry, then opens WhatsApp pre-filled
-    FacebookOffers.tsx     # Homepage Facebook panel + shared FacebookIcon
+    FacebookOffers.tsx     # Homepage Facebook panel with live posts/videos window + shared FacebookIcon
   data/
     site.ts                # Company contact details, Facebook URL, absoluteUrl() helper
     vehicles.ts            # Vehicle inventory typed array — edit to add/update stock
