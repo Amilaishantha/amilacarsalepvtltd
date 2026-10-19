@@ -37,7 +37,7 @@ export default function FacebookOffers() {
           position: 'relative',
           zIndex: 1,
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
           gap: '3rem',
           alignItems: 'center',
         }}
@@ -98,7 +98,9 @@ export default function FacebookOffers() {
 /** Facebook's Page Plugin accepts widths between 180px and 500px. */
 const FEED_MIN_WIDTH = 180
 const FEED_MAX_WIDTH = 500
-const FEED_HEIGHT = 640
+const FEED_HEIGHT = 560
+/** If the plugin hasn't loaded by then, Facebook is treated as blocked. */
+const FEED_TIMEOUT_MS = 12000
 
 function feedSrc(pageUrl: string, width: number) {
   const params = new URLSearchParams({
@@ -128,6 +130,31 @@ function FacebookFeedWindow() {
   const [width, setWidth] = useState(FEED_MAX_WIDTH)
   const [tab, setTab] = useState<'posts' | 'videos'>('posts')
   const hasVideos = site.facebookFeaturedVideos.length > 0
+  const [inView, setInView] = useState(false)
+  const [feedStatus, setFeedStatus] = useState<'loading' | 'loaded' | 'failed'>('loading')
+
+  // The iframe is lazy-loaded, so only start the timeout once the window is on screen.
+  useEffect(() => {
+    const el = bodyRef.current
+    if (!el || inView) return
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(e => e.isIntersecting)) setInView(true)
+    }, { rootMargin: '200px' })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [inView])
+
+  // A blocked iframe (privacy extension, network filter) may never fire `load`.
+  useEffect(() => {
+    if (!inView || feedStatus !== 'loading') return
+    const timer = setTimeout(() => setFeedStatus('failed'), FEED_TIMEOUT_MS)
+    return () => clearTimeout(timer)
+  }, [inView, feedStatus])
+
+  // A new width remounts the iframe, so wait for it to load again.
+  useEffect(() => {
+    setFeedStatus(s => (s === 'failed' ? s : 'loading'))
+  }, [width])
 
   // The plugin renders at a fixed width, so match it to the window on resize.
   useEffect(() => {
@@ -217,7 +244,7 @@ function FacebookFeedWindow() {
           </button>
         ) : (
           <a
-            href={`${site.facebookUrl}/videos`}
+            href={site.facebookVideosUrl}
             target="_blank"
             rel="noopener noreferrer"
             style={{ ...tabStyle(false), textDecoration: 'none' }}
@@ -227,32 +254,43 @@ function FacebookFeedWindow() {
         )}
       </div>
 
-      <div ref={bodyRef} style={{ position: 'relative', background: '#fff', minHeight: `${FEED_HEIGHT}px` }}>
-        {/* Shown if Facebook is blocked (e.g. by a privacy extension) */}
-        <a
-          href={site.facebookUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#1877F2',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            textDecoration: 'none',
-          }}
-        >
-          Loading Facebook posts…
-        </a>
-
+      <div
+        ref={bodyRef}
+        style={{
+          position: 'relative',
+          background: '#fff',
+          minHeight: feedStatus === 'failed' ? undefined : `${FEED_HEIGHT}px`,
+          overflow: 'hidden',
+        }}
+      >
+        {feedStatus === 'failed' ? (
+          <FacebookFallback />
+        ) : (
+          <>
+            {feedStatus === 'loading' && (
+              <div
+                role="status"
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#65676b',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                }}
+              >
+                Connecting to Facebook…
+              </div>
+            )}
         {tab === 'posts' || !hasVideos ? (
           <iframe
             key={width}
             title={`${site.name} latest Facebook posts and videos`}
             src={feedSrc(site.facebookUrl, width)}
+            onLoad={() => setFeedStatus('loaded')}
+            onError={() => setFeedStatus('failed')}
             width={width}
             height={FEED_HEIGHT}
             style={{ border: 'none', overflow: 'hidden', display: 'block', position: 'relative', margin: '0 auto' }}
@@ -290,27 +328,93 @@ function FacebookFeedWindow() {
             ))}
           </div>
         )}
+          </>
+        )}
       </div>
 
-      <a
-        href={site.facebookUrl}
-        target="_blank"
-        rel="noopener noreferrer"
+      {/* Always visible: Facebook can render the Page header but leave the timeline blank
+          (third-party cookies blocked, Page restrictions), and that can't be detected from here. */}
+      {feedStatus !== 'failed' && <FacebookFallback compact />}
+
+    </div>
+  )
+}
+
+/**
+ * Links to the real Facebook Page and its videos. Shown under the live feed, and on its
+ * own in place of the feed when Facebook can't be loaded.
+ */
+function FacebookFallback({ compact = false }: { compact?: boolean }) {
+  const button: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.6rem',
+    padding: '0.9rem 1.4rem',
+    fontSize: '0.78rem',
+    fontWeight: 700,
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase',
+    textDecoration: 'none',
+    textAlign: 'center',
+    flex: '1 1 200px',
+    maxWidth: '100%',
+  }
+
+  return (
+    <div
+      style={{
+        background: 'var(--dark-3)',
+        borderTop: compact ? '1px solid var(--border)' : 'none',
+        padding: compact ? '1.25rem 1rem' : '3rem 1.5rem',
+        textAlign: 'center',
+      }}
+    >
+      {!compact && (
+        <div style={{ color: '#1877F2', display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+          <FacebookIcon size={40} />
+        </div>
+      )}
+      <h3
         style={{
-          display: 'block',
-          padding: '0.9rem 1rem',
-          borderTop: '1px solid var(--border)',
-          color: '#1877F2',
-          fontSize: '0.78rem',
+          fontFamily: 'Cormorant Garamond, serif',
+          fontSize: compact ? '1.25rem' : 'clamp(1.5rem, 4vw, 1.9rem)',
           fontWeight: 700,
-          letterSpacing: '0.04em',
-          textTransform: 'uppercase',
-          textDecoration: 'none',
-          textAlign: 'center',
+          color: 'var(--gold)',
+          margin: '0 0 0.5rem',
+          lineHeight: 1.2,
         }}
       >
-        {site.facebookLabel} →
-      </a>
+        View Our Latest Vehicle Offers on Facebook
+      </h3>
+      {!compact && (
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.7, margin: '0 auto 1.75rem', maxWidth: '360px' }}>
+          Our Facebook posts couldn&apos;t be shown here — your browser may be blocking Facebook content. See every new
+          arrival and offer directly on our Facebook Page.
+        </p>
+      )}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center', marginTop: compact ? '1rem' : 0 }}>
+        <a
+          href={site.facebookUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ ...button, background: '#1877F2', color: '#fff', boxShadow: '0 10px 30px rgba(24,119,242,0.25)' }}
+        >
+          <FacebookIcon size={16} />
+          Open Facebook Page
+        </a>
+        <a
+          href={site.facebookVideosUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ ...button, background: 'transparent', color: '#1877F2', border: '1px solid #1877F2' }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+          Watch Our Vehicle Videos
+        </a>
+      </div>
     </div>
   )
 }
