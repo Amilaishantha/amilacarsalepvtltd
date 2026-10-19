@@ -7,6 +7,7 @@ export const site = {
   location: 'Bandarawela, Uva Province, Sri Lanka',
   facebookUrl: 'https://www.facebook.com/amilacarsale',
   facebookLabel: 'Click for More Offers',
+  facebookVideosUrl: 'https://www.facebook.com/amilacarsale/videos',
   /**
    * Optional: paste Facebook video links here (e.g. https://www.facebook.com/amilacarsale/videos/123…)
    * to pin them in the homepage "Videos" tab. Leave empty to link to the page's videos instead.
