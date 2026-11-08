@@ -1,417 +1,305 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { fetchVehicles, type VehicleRow } from '@/lib/vehicle-fns'
+import { createFileRoute, Link, useLoaderData } from '@tanstack/react-router'
+import { fetchVehicles } from '@/lib/vehicle-fns'
 import FacebookOffers from '@/components/FacebookOffers'
+import { breadcrumbLd, businessLd, faqLd, pageHead, websiteLd } from '@/lib/seo'
+import { site, mapsDirectionsUrl, mapsEmbedUrl, whatsappLink } from '@/data/site'
+import { HOME_FAQS } from '@/data/faqs'
+import { BRAND_PAGES } from '@/data/brands'
+import { ARTICLES } from '@/data/articles'
+import { EMPTY_SETTINGS, type PublicSettings } from '@/lib/content-fns'
+import { ArrowIcon, FaqList, PhoneIcon, PinIcon, SmartImage, VehicleGrid, WhatsAppIcon } from '@/components/ui'
+import { brandSlug, displayMake, isBrandNewCondition, isPlaceholderImage, vehicleAlt, vehicleFullName, vehicleSlug, type VehicleRow } from '@/lib/vehicle-utils'
 
 export const Route = createFileRoute('/')({
   loader: () => fetchVehicles(),
+  head: ({ matches }) => {
+    const settings = (matches[0]?.loaderData as { settings?: PublicSettings } | undefined)?.settings ?? EMPTY_SETTINGS
+    return pageHead({
+      path: '/',
+      matches,
+      title: 'Japanese Cars for Sale in Sri Lanka | Amila Car Sale Pvt Ltd',
+      description:
+        'Buy brand-new and quality Japanese vehicles in Sri Lanka with Amila Car Sale Pvt Ltd. Explore available vehicles, Japan imports, reservations and vehicle import tax calculations.',
+      jsonLd: [websiteLd(), businessLd(settings), faqLd(HOME_FAQS), breadcrumbLd([{ name: 'Home', path: '/' }])],
+    })
+  },
   component: HomePage,
 })
 
-function StatCard({ value, label }: { value: string; label: string }) {
+function SectionTitle({ id, tag, title, action }: { id: string; tag: string; title: string; action?: React.ReactNode }) {
   return (
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.8rem', fontWeight: 700, color: 'var(--gold)', lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginTop: '0.5rem' }}>{label}</div>
+    <div style={{ marginBottom: '1.75rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem' }}>
+      <div>
+        <div className="section-tag" style={{ marginBottom: '0.75rem' }}>{tag}</div>
+        <h2 id={id} className="h2" style={{ margin: 0 }}>{title}</h2>
+      </div>
+      {action}
     </div>
   )
 }
 
-function WhyCard({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
-  return (
-    <div style={{
-      background: 'var(--dark-2)',
-      border: '1px solid var(--border)',
-      padding: '2rem',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '3px',
-        height: '100%',
-        background: 'linear-gradient(to bottom, var(--gold), transparent)',
-      }} />
-      <div style={{ color: 'var(--gold)', marginBottom: '1rem' }}>{icon}</div>
-      <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 600, marginBottom: '0.6rem', color: 'var(--text-primary)' }}>{title}</div>
-      <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.7 }}>{body}</div>
-    </div>
-  )
-}
+const SERVICES = [
+  { title: 'Vehicles in stock', body: 'Browse Japanese cars, SUVs, kei cars and vans already in Sri Lanka or arriving soon, at our Bandarawela showroom.', to: '/vehicles', cta: 'Browse vehicles' },
+  { title: 'Import to order from Japan', body: 'Tell us the model, grade and budget. We source from Japanese auctions and dealers and share the auction sheet before you buy.', to: '/import-from-japan', cta: 'Request an import' },
+  { title: 'Import tax estimates', body: 'Estimate excise duty, CID, surcharge, luxury tax, SSCL, VAT and VEL with our free calculator — then ask us for a confirmed quote.', to: '/tax-calculator', cta: 'Open the calculator' },
+  { title: 'Finance & registration help', body: 'We help arrange bank finance and leasing, and guide you through registration with the Department of Motor Traffic.', to: '/contact', cta: 'Talk to us' },
+]
+
+const STEPS = [
+  { n: '01', title: 'Choose a vehicle', body: 'Pick a car from our stock or tell us what you want imported.' },
+  { n: '02', title: 'Send a WhatsApp enquiry', body: 'Use the reserve button on the vehicle page — the full vehicle details are sent for you.' },
+  { n: '03', title: 'Confirm price & terms', body: 'We confirm availability, price and the reservation terms in writing.' },
+  { n: '04', title: 'Inspect & drive home', body: 'Inspect the vehicle at our showroom, complete the paperwork and collect your car.' },
+]
+
+const WHY = [
+  { title: 'Direct importer — no middlemen', body: 'We source vehicles directly from Japanese auctions and dealers, so you pay a fair market price.' },
+  { title: 'Full tax transparency', body: 'Know the import costs before you commit, with a clear breakdown of every duty and levy.' },
+  { title: 'Local hill-country knowledge', body: 'Based in Bandarawela, we recommend vehicles that suit Uva Province roads and your daily routes.' },
+  { title: 'Bank finance available', body: 'We work with Sri Lankan banks and leasing companies to help you finance your vehicle.' },
+]
 
 function HomePage() {
   const vehicles = Route.useLoaderData() as VehicleRow[]
-  const featuredVehicles = vehicles.filter(v => v.status === 'Available').slice(0, 3)
+  const settings = (useLoaderData({ from: '__root__' }) as { settings?: PublicSettings })?.settings ?? EMPTY_SETTINGS
+  const live = vehicles.filter(v => v.status !== 'Sold')
+  const withPhoto = live.filter(v => !isPlaceholderImage(v.image))
+
+  const featured = (() => {
+    const flagged = withPhoto.filter(v => v.featured)
+    const rest = withPhoto.filter(v => !v.featured && v.status === 'Available')
+    return [...flagged, ...rest].slice(0, 6)
+  })()
+  const shown = new Set(featured.map(v => v.id))
+  const latest = [...withPhoto].sort((a, b) => b.id - a.id).filter(v => !shown.has(v.id)).slice(0, 6)
+  latest.forEach(v => shown.add(v.id))
+  const brandNew = withPhoto
+    .filter(v => isBrandNewCondition(v) || (v.mileage === 0 && v.year >= new Date().getFullYear() - 1))
+    .filter(v => !shown.has(v.id))
+    .slice(0, 6)
+  const hero = featured[0] ?? withPhoto[0]
+  const makes = Array.from(new Set(live.map(v => displayMake(v.make)))).sort()
 
   return (
-    <main>
-      {/* ── HERO ── */}
-      <section style={{
-        position: 'relative',
-        minHeight: 'calc(100vh - 70px)',
-        display: 'flex',
-        alignItems: 'center',
-        overflow: 'hidden',
-        background: 'var(--dark)',
-      }}>
-        {/* Background video — place your video at /hero-video.mp4 in the public folder */}
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            opacity: 0.28,
-            zIndex: 0,
-          }}
-        >
-          <source src="/hero-video.mp4" type="video/mp4" />
-        </video>
-
-        {/* Dark gradient overlay on top of video */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'linear-gradient(135deg, rgba(12,14,18,0.85) 0%, rgba(12,14,18,0.6) 60%, rgba(12,14,18,0.8) 100%)',
-          zIndex: 1,
-        }} />
-
-        {/* Background orbs */}
-        <div className="hero-orb" style={{ width: '600px', height: '600px', background: 'rgba(184,0,0,0.07)', top: '-200px', right: '-100px', zIndex: 1 }} />
-        <div className="hero-orb" style={{ width: '800px', height: '800px', background: 'rgba(201,165,61,0.05)', bottom: '-400px', left: '-300px', zIndex: 1 }} />
-
-        {/* Grid lines decoration */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: 'linear-gradient(rgba(201,165,61,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,165,61,0.04) 1px, transparent 1px)',
-          backgroundSize: '80px 80px',
-          maskImage: 'radial-gradient(ellipse at 50% 50%, black 30%, transparent 80%)',
-          zIndex: 1,
-        }} />
-
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '4rem 2rem', position: 'relative', zIndex: 2 }}>
-          <div style={{ maxWidth: '780px' }}>
-            <div className="section-tag animate-fade-up" style={{ marginBottom: '1.5rem' }}>
-              Direct Importers · Bandarawela, Sri Lanka
-            </div>
-
-            <h1 className="animate-fade-up-delay-1" style={{
-              fontFamily: 'Cormorant Garamond, serif',
-              fontSize: 'clamp(3rem, 7vw, 6.5rem)',
-              fontWeight: 700,
-              lineHeight: 1.05,
-              margin: '0 0 1.5rem',
-              color: 'var(--text-primary)',
-              letterSpacing: '-0.02em',
-            }}>
-              Drive Your
-              <br />
-              <span style={{ color: 'var(--gold)' }}>Dream Vehicle</span>
-              <br />
-              <span style={{ fontSize: '0.65em', fontStyle: 'italic', fontWeight: 400, color: 'var(--text-muted)' }}>
-                Straight from Japan
-              </span>
+    <main id="main">
+      {/* ── HERO + SEARCH ── */}
+      <section style={{ position: 'relative', overflow: 'hidden', background: 'radial-gradient(ellipse at 80% 20%, rgba(229,20,27,0.18), transparent 55%), var(--dark)', borderBottom: '1px solid var(--border)' }}>
+        <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(420px, 100%), 1fr))', gap: '2.5rem', alignItems: 'center', paddingTop: 'clamp(2.5rem, 6vw, 4.5rem)', paddingBottom: 'clamp(2.5rem, 6vw, 4.5rem)' }}>
+          <div>
+            <div className="section-tag" style={{ marginBottom: '1.1rem' }}>Direct vehicle importers · Bandarawela</div>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(2.1rem, 5.2vw, 3.9rem)', lineHeight: 1.05, margin: '0 0 1.1rem', letterSpacing: '-0.025em' }}>
+              Japanese Cars for Sale <span style={{ color: 'var(--gold)' }}>in Sri Lanka</span>
             </h1>
-
-            <p className="animate-fade-up-delay-2" style={{
-              color: 'var(--text-muted)',
-              fontSize: '1.05rem',
-              lineHeight: 1.8,
-              maxWidth: '560px',
-              marginBottom: '2.5rem',
-            }}>
-              Amila Car Sale Pvt Ltd brings you quality Japanese vehicles directly to Sri Lanka — no middlemen, unbeatable prices, and full import transparency with our dedicated tax calculator.
+            <p className="lead" style={{ marginBottom: '1.75rem' }}>
+              {site.name} imports brand-new and quality used Japanese vehicles directly from Japan — Toyota, Honda, Nissan, Suzuki, Daihatsu and more —
+              with transparent import tax estimates and a showroom on Diyathalawa Road, Kahagolla, Bandarawela.
             </p>
 
-            <div className="animate-fade-up-delay-3" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-              <Link to="/marketplace" className="btn-gold">
-                Browse Vehicles
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </Link>
-              <Link to="/tax-calculator" className="btn-outline">
-                Import Tax Calculator
-              </Link>
-            </div>
+            <form action="/vehicles" method="get" role="search" aria-label="Search available vehicles" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', background: 'var(--dark-2)', border: '1px solid var(--border)', padding: '0.6rem', marginBottom: '1.25rem', maxWidth: '620px' }}>
+              <label htmlFor="home-q" className="sr-only">Search vehicles</label>
+              <input id="home-q" name="q" type="search" placeholder="Search e.g. Raize, Vezel, Yaris 2024" className="calc-input" style={{ flex: '1 1 200px', fontSize: '16px' }} />
+              <label htmlFor="home-make" className="sr-only">Make</label>
+              <select id="home-make" name="make" className="calc-input" style={{ flex: '0 1 150px' }} defaultValue="">
+                <option value="">All makes</option>
+                {makes.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+              <button type="submit" className="btn-gold" style={{ flex: '0 0 auto' }}>Search</button>
+            </form>
 
-            {/* Trust badges */}
-            <div className="animate-fade-up-delay-4" style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '1.5rem',
-              marginTop: '3rem',
-              paddingTop: '2rem',
-              borderTop: '1px solid var(--border)',
-            }}>
-              {['Direct Importer', 'Full Inspection', 'Transparent Pricing', 'Bank Finance Available'].map(badge => (
-                <div key={badge} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 500 }}>
-                  <span style={{ color: 'var(--gold)', fontSize: '0.7rem' }}>✦</span>
-                  {badge}
-                </div>
-              ))}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <Link to="/vehicles" className="btn-outline">Browse {live.length} vehicles <ArrowIcon /></Link>
+              <a href={whatsappLink(`Hello ${site.shortName}, I would like to enquire about a vehicle.`)} target="_blank" rel="noopener noreferrer" className="btn-wa" data-track="hero"><WhatsAppIcon /> WhatsApp us</a>
             </div>
           </div>
-        </div>
 
-        {/* Scroll cue */}
-        <div style={{
-          position: 'absolute',
-          bottom: '2rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '0.5rem',
-          color: 'var(--text-dim)',
-          fontSize: '0.65rem',
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          animation: 'fadeIn 2s ease both',
-          zIndex: 2,
-        }}>
-          <span>Scroll</span>
-          <div style={{ width: '1px', height: '40px', background: 'linear-gradient(to bottom, var(--gold-dim), transparent)' }} />
+          {hero && (
+            <Link to="/vehicles/$slug" params={{ slug: vehicleSlug(hero) }} style={{ position: 'relative', display: 'block', aspectRatio: '4/3', overflow: 'hidden', border: '1px solid var(--border)', background: 'var(--dark-3)', textDecoration: 'none' }}>
+              <SmartImage src={hero.image} alt={vehicleAlt(hero)} ratio={4 / 3} priority widths={[480, 720, 960, 1280]} sizes="(max-width: 900px) 100vw, 640px" />
+              <div style={{ position: 'absolute', inset: 'auto 0 0 0', padding: '1.25rem', background: 'linear-gradient(to top, rgba(9,9,10,0.95), transparent)' }}>
+                <div style={{ fontSize: '0.66rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--gold-light)', fontWeight: 700 }}>Featured vehicle</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.2rem', color: '#fff' }}>{vehicleFullName(hero)}</div>
+              </div>
+            </Link>
+          )}
         </div>
       </section>
 
       {/* ── STATS ── */}
-      <section style={{
-        background: 'var(--dark-2)',
-        borderTop: '1px solid var(--border)',
-        borderBottom: '1px solid var(--border)',
-        padding: '3rem 2rem',
-      }}>
-        <div style={{
-          maxWidth: '1400px',
-          margin: '0 auto',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-          gap: '2.5rem',
-        }}>
-          <StatCard value="12+" label="Years Experience" />
-          <StatCard value="500+" label="Vehicles Imported" />
-          <StatCard value="100%" label="Direct from Japan" />
-          <StatCard value="24/7" label="Customer Support" />
-        </div>
-      </section>
-
-      {/* ── WHY CHOOSE US ── */}
-      <section style={{ padding: '6rem 2rem', maxWidth: '1400px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '3.5rem' }}>
-          <div className="section-tag" style={{ marginBottom: '1rem' }}>Why Choose Us</div>
-          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2rem, 4vw, 3.2rem)', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
-            The Amila Difference
-          </h2>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem' }}>
-          <WhyCard
-            icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>}
-            title="Direct Import — No Middlemen"
-            body="We source vehicles directly from Japanese auctions and dealerships, cutting out all intermediaries. You pay the true market price, not inflated reseller margins."
-          />
-          <WhyCard
-            icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>}
-            title="Full Tax Transparency"
-            body="Use our import tax calculator to know exactly what your vehicle will cost before you commit. No hidden surprises — we show you the complete breakdown of XID, CID, VAT, and all levies."
-          />
-          <WhyCard
-            icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/></svg>}
-            title="Expert Local Knowledge"
-            body="Based in Bandarawela, we understand Sri Lankan roads and conditions. Our team recommends the right vehicle for your terrain — whether it's highland mountain routes or coastal highways."
-          />
-          <WhyCard
-            icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}
-            title="Bank Finance Available"
-            body="We work with leading Sri Lankan banks to help you secure the best financing rates. Drive home your vehicle with flexible repayment options tailored to your budget."
-          />
-        </div>
-      </section>
-
-      {/* ── FEATURED VEHICLES ── */}
-      <section style={{ padding: '0 2rem 6rem', maxWidth: '1400px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '3rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem' }}>
-          <div>
-            <div className="section-tag" style={{ marginBottom: '1rem' }}>New Arrivals</div>
-            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, margin: 0 }}>
-              Featured Vehicles
-            </h2>
-          </div>
-          <Link to="/marketplace" className="btn-outline">View All Vehicles →</Link>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.5rem' }}>
-          {featuredVehicles.map(vehicle => (
-            <Link key={vehicle.id} to="/marketplace/$vehicleId" params={{ vehicleId: vehicle.id.toString() }} className="vehicle-card">
-              <div style={{ position: 'relative', aspectRatio: '16/10', overflow: 'hidden', background: 'var(--dark-3)' }}>
-                <img
-                  src={vehicle.image}
-                  alt={`${vehicle.make} ${vehicle.model}`}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }}
-                />
-                <div style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(to top, rgba(12,14,18,0.9) 0%, transparent 50%)',
-                }} />
-                <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
-                  <span className={`spec-badge status-${vehicle.status.toLowerCase()}`} style={{ fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', padding: '0.25rem 0.6rem' }}>
-                    {vehicle.status}
-                  </span>
-                </div>
-                <div style={{ position: 'absolute', bottom: '1rem', left: '1.2rem', right: '1.2rem' }}>
-                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>
-                    {vehicle.year} {vehicle.make} {vehicle.model}
-                  </div>
-                </div>
-              </div>
-              <div style={{ padding: '1.2rem 1.4rem' }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1rem' }}>
-                  <span className="spec-badge">{vehicle.fuel}</span>
-                  <span className="spec-badge">{vehicle.transmission}</span>
-                  <span className="spec-badge">{vehicle.engineCC ? `${vehicle.engineCC}cc` : `${vehicle.motorKW}kW`}</span>
-                  <span className="spec-badge">{vehicle.mileage.toLocaleString()} km</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '2px' }}>Asking Price</div>
-                    <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 700, color: 'var(--gold)' }}>
-                      Rs. {vehicle.price.toLocaleString('en-LK')}
-                    </div>
-                  </div>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                    View Details →
-                  </span>
-                </div>
-              </div>
-            </Link>
+      <section aria-label="Company highlights" style={{ background: 'var(--dark-2)', borderBottom: '1px solid var(--border)', padding: '2rem 0' }}>
+        <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1.5rem' }}>
+          {site.stats.map(s => (
+            <div key={s.label} style={{ textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: '2.2rem', fontWeight: 800, color: 'var(--gold)', lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: '0.74rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginTop: '0.45rem' }}>{s.label}</div>
+            </div>
           ))}
         </div>
       </section>
 
-      {/* ── FACEBOOK OFFERS ── */}
-      <FacebookOffers />
+      {/* ── FEATURED ── */}
+      {featured.length > 0 && (
+        <section className="container section" aria-labelledby="featured-h">
+          <SectionTitle id="featured-h" tag="Hand-picked" title="Featured Vehicles" action={<Link to="/vehicles" className="btn-outline">View all vehicles →</Link>} />
+          <VehicleGrid vehicles={featured} />
+        </section>
+      )}
 
-      {/* ── TAX CALCULATOR BANNER ── */}
-      <section style={{
-        background: 'var(--dark-2)',
-        borderTop: '1px solid var(--border)',
-        borderBottom: '1px solid var(--border)',
-        padding: '5rem 2rem',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        <div className="hero-orb" style={{ width: '500px', height: '500px', background: 'rgba(201,165,61,0.06)', top: '-200px', right: '-100px' }} />
-        <div style={{ maxWidth: '700px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
-          <div className="section-tag" style={{ justifyContent: 'center', marginBottom: '1rem' }}>
-            Free Tool
+      {/* ── LATEST ARRIVALS ── */}
+      {latest.length > 0 && (
+        <section className="section-alt section" aria-labelledby="latest-h">
+          <div className="container">
+            <SectionTitle id="latest-h" tag="Just added" title="Latest Arrivals from Japan" action={<Link to="/vehicles" className="btn-outline">See all stock →</Link>} />
+            <VehicleGrid vehicles={latest} />
           </div>
-          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2rem, 4vw, 3.2rem)', fontWeight: 700, margin: '0 0 1rem', color: 'var(--text-primary)' }}>
-            Know Your Import Costs <span style={{ color: 'var(--gold)', fontStyle: 'italic' }}>Before You Buy</span>
-          </h2>
-          <p style={{ color: 'var(--text-muted)', lineHeight: 1.8, marginBottom: '2rem', fontSize: '0.95rem' }}>
-            Our Sri Lanka vehicle import tax calculator uses the latest gazette XID rates to give you an accurate breakdown of all duties — XID, CID, SUR, SSCL, VAT, Luxury Tax, and VEL.
+        </section>
+      )}
+
+      {/* ── BRAND NEW ── */}
+      {brandNew.length > 0 && (
+        <section className="container section" aria-labelledby="new-h">
+          <SectionTitle id="new-h" tag="Zero mileage" title="Brand-New Japanese Vehicles" />
+          <p className="muted" style={{ margin: '-0.75rem 0 1.5rem', fontSize: '0.92rem' }}>Recent model-year vehicles recorded with 0 km or listed as brand new. Check each listing for its condition.</p>
+          <VehicleGrid vehicles={brandNew} />
+        </section>
+      )}
+
+      {/* ── BRANDS ── */}
+      <section className="container" style={{ paddingBottom: '3rem' }} aria-labelledby="brands-h">
+        <h2 id="brands-h" className="h3">Browse by brand</h2>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          {BRAND_PAGES.map(b => {
+            const n = live.filter(v => brandSlug(v.make) === b.slug).length
+            return (
+              <Link key={b.slug} to="/brands/$brand" params={{ brand: b.slug }} className="chip">
+                {b.name} {n > 0 && <span style={{ color: 'var(--gold-light)' }}>({n})</span>}
+              </Link>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* ── SERVICES ── */}
+      <section className="section-alt section" aria-labelledby="services-h">
+        <div className="container">
+          <SectionTitle id="services-h" tag="What we do" title="Vehicle Import Services in Sri Lanka" />
+          <div className="grid-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))' }}>
+            {SERVICES.map(s => (
+              <div key={s.title} className="card card-accent" style={{ display: 'flex', flexDirection: 'column' }}>
+                <h3 className="h3">{s.title}</h3>
+                <p className="muted" style={{ fontSize: '0.9rem', lineHeight: 1.7, margin: '0 0 1rem', flex: 1 }}>{s.body}</p>
+                <Link to={s.to} style={{ color: 'var(--gold-light)', fontWeight: 700, fontSize: '0.82rem', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.cta} →</Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW TO RESERVE ── */}
+      <section className="container section" aria-labelledby="reserve-h">
+        <SectionTitle id="reserve-h" tag="Simple process" title="How to Reserve a Vehicle" action={<Link to="/blog/$slug" params={{ slug: 'how-to-reserve-a-japanese-vehicle' }} className="btn-outline">Full guide →</Link>} />
+        <ol style={{ listStyle: 'none', padding: 0, margin: 0 }} className="grid-3">
+          {STEPS.map(s => (
+            <li key={s.n} className="card">
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 800, color: 'var(--gold)', lineHeight: 1, marginBottom: '0.75rem' }} aria-hidden="true">{s.n}</div>
+              <h3 className="h3">{s.title}</h3>
+              <p className="muted" style={{ fontSize: '0.9rem', lineHeight: 1.7, margin: 0 }}>{s.body}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* ── TAX CALCULATOR PROMO ── */}
+      <section style={{ background: 'linear-gradient(135deg, #1a0405, var(--dark-2) 60%)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }} className="section" aria-labelledby="tax-h">
+        <div className="container" style={{ maxWidth: '820px', textAlign: 'center' }}>
+          <div className="section-tag" style={{ justifyContent: 'center', marginBottom: '1rem' }}>Free tool</div>
+          <h2 id="tax-h" className="h2">Vehicle Import Tax Calculator — Sri Lanka</h2>
+          <p className="lead" style={{ margin: '0 auto 1.75rem' }}>
+            Estimate excise duty (XID), Customs Import Duty, surcharge, luxury tax, SSCL, VAT and VEL for any car imported from Japan using the Gazette XID rates.
           </p>
-          <Link to="/tax-calculator" className="btn-gold" style={{ fontSize: '0.85rem', padding: '1rem 2.5rem' }}>
-            Open Tax Calculator
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <Link to="/tax-calculator" className="btn-gold" style={{ padding: '1rem 2.25rem', fontSize: '0.85rem' }}>
+            Calculate your vehicle import taxes <ArrowIcon size={16} />
           </Link>
         </div>
       </section>
 
-      {/* ── LOCATION ── */}
-      <section style={{ padding: '5rem 2rem', maxWidth: '1400px', margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '4rem', alignItems: 'center' }}>
-          <div>
-            <div className="section-tag" style={{ marginBottom: '1rem' }}>Find Us</div>
-            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, margin: '0 0 1.5rem' }}>
-              Visit Our Showroom in Bandarawela
-            </h2>
-            <p style={{ color: 'var(--text-muted)', lineHeight: 1.8, marginBottom: '2rem' }}>
-              Come see our vehicles in person at our Bandarawela showroom. Our team is ready to help you find the perfect vehicle and walk you through the full import process.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
-              {[
-                { label: 'Address', value: 'Bandarawela, Uva Province, Sri Lanka' },
-                { label: 'Phone', value: '075 454 3533', href: 'tel:+94754543533' },
-                { label: 'Email', value: 'amilacarsale1pvtltd2@gmail.com', href: 'mailto:amilacarsale1pvtltd2@gmail.com' },
-              ].map(({ label, value, href }) => (
-                <div key={label} style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
-                  <div style={{ width: '80px', flexShrink: 0, fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--gold)', paddingTop: '2px' }}>{label}</div>
-                  {href ? (
-                    <a href={href} style={{ color: 'var(--text-primary)', textDecoration: 'none', fontSize: '0.9rem' }}
-                      onMouseEnter={e => (e.currentTarget.style.color = 'var(--gold)')}
-                      onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-primary)')}
-                    >{value}</a>
-                  ) : (
-                    <span style={{ color: 'var(--text-primary)', fontSize: '0.9rem' }}>{value}</span>
-                  )}
-                </div>
-              ))}
+      {/* ── WHY US ── */}
+      <section className="container section" aria-labelledby="why-h">
+        <SectionTitle id="why-h" tag="Why choose us" title="Why Choose Amila Car Sale?" />
+        <div className="grid-3">
+          {WHY.map(w => (
+            <div key={w.title} className="card card-accent">
+              <h3 className="h3">{w.title}</h3>
+              <p className="muted" style={{ fontSize: '0.9rem', lineHeight: 1.7, margin: 0 }}>{w.body}</p>
             </div>
-            <Link to="/contact" className="btn-gold">Get in Touch</Link>
-          </div>
-
-          <div style={{
-            background: 'var(--dark-2)',
-            border: '1px solid var(--border)',
-            padding: '2.5rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.5rem',
-          }}>
-            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.6rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-              Request a Vehicle
-            </div>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.87rem', lineHeight: 1.7, margin: 0 }}>
-              Don't see what you're looking for? Tell us the make, model, and year you want — we'll source it directly from Japan for you.
-            </p>
-            <a
-              href="https://wa.me/94754543533?text=Hello Amila Car Sale, I would like to enquire about a vehicle."
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                background: '#25D366',
-                color: '#fff',
-                padding: '1rem 1.5rem',
-                textDecoration: 'none',
-                fontWeight: 700,
-                fontSize: '0.88rem',
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(37,211,102,0.3)' }}
-              onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-              </svg>
-              Chat on WhatsApp
-            </a>
-            <a
-              href="tel:+94754543533"
-              className="btn-outline"
-              style={{ textAlign: 'center', justifyContent: 'center' }}
-            >
-              Call Us: 075 454 3533
-            </a>
-          </div>
+          ))}
         </div>
       </section>
 
+      {/* ── TESTIMONIALS (genuine, admin-entered only) ── */}
+      {settings.testimonials.length > 0 && (
+        <section className="section-alt section" aria-labelledby="testi-h">
+          <div className="container">
+            <SectionTitle id="testi-h" tag="Customer feedback" title="What Our Customers Say" />
+            <div className="grid-3">
+              {settings.testimonials.map(t => (
+                <figure key={t.name + t.date} className="card" style={{ margin: 0 }}>
+                  <blockquote style={{ margin: '0 0 1rem', color: 'var(--text-primary)', lineHeight: 1.7, fontSize: '0.95rem' }}>“{t.text}”</blockquote>
+                  <figcaption style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                    <strong style={{ color: '#fff' }}>{t.name}</strong>
+                    {t.source && <> · {t.url ? <a href={t.url} target="_blank" rel="noopener noreferrer nofollow" style={{ color: 'var(--text-muted)' }}>{t.source}</a> : t.source}</>}
+                    {t.date && <> · {t.date}</>}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── FACEBOOK ── */}
+      <FacebookOffers />
+
+      {/* ── FAQ ── */}
+      <section className="container section" aria-labelledby="faq-h" style={{ maxWidth: '900px' }}>
+        <SectionTitle id="faq-h" tag="Questions" title="Frequently Asked Questions" />
+        <FaqList faqs={HOME_FAQS} />
+        <p className="muted" style={{ fontSize: '0.9rem', marginTop: '1.5rem' }}>
+          More answers in our <Link to="/blog" style={{ color: '#fff' }}>knowledge centre</Link> — for example{' '}
+          <Link to="/blog/$slug" params={{ slug: ARTICLES[0].slug }} style={{ color: '#fff' }}>how to import a car from Japan to Sri Lanka</Link>.
+        </p>
+      </section>
+
+      {/* ── CONTACT & LOCATION ── */}
+      <section className="section-alt section" aria-labelledby="loc-h">
+        <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))', gap: '2.5rem', alignItems: 'stretch' }}>
+          <div>
+            <div className="section-tag" style={{ marginBottom: '0.75rem' }}>Visit us</div>
+            <h2 id="loc-h" className="h2">Japanese Vehicle Showroom in Bandarawela</h2>
+            <p className="muted" style={{ lineHeight: 1.8, marginBottom: '1.5rem' }}>
+              See our vehicles in person at our showroom in Kahagolla, Bandarawela — serving customers across Badulla District, Uva Province and all of Sri Lanka.
+            </p>
+            <address style={{ fontStyle: 'normal', display: 'grid', gap: '0.9rem', marginBottom: '1.75rem' }}>
+              <div style={{ display: 'flex', gap: '0.75rem' }}><span style={{ color: 'var(--gold)' }}><PinIcon /></span><span><strong>{site.name}</strong><br />{site.addressLine}</span></div>
+              <div style={{ display: 'flex', gap: '0.75rem' }}><span style={{ color: 'var(--gold)' }}><PhoneIcon size={16} /></span><a href={`tel:${site.phoneIntl}`} data-track="home-contact" style={{ color: '#fff', textDecoration: 'none' }}>{site.phoneDisplay}</a></div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.92rem' }}>{site.hoursDisplay}</div>
+            </address>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <a href={whatsappLink(`Hello ${site.shortName}, I would like to visit your showroom.`)} target="_blank" rel="noopener noreferrer" className="btn-wa" data-track="home-contact"><WhatsAppIcon /> Chat on WhatsApp</a>
+              <a href={mapsDirectionsUrl} target="_blank" rel="noopener noreferrer" className="btn-outline">Get directions</a>
+              <Link to="/location" className="btn-outline">Showroom details</Link>
+            </div>
+          </div>
+          <div style={{ minHeight: '320px', border: '1px solid var(--border)', background: 'var(--dark-3)' }}>
+            <iframe
+              title={`Map showing ${site.name}, ${site.addressLine}`}
+              src={mapsEmbedUrl}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              style={{ width: '100%', height: '100%', minHeight: '320px', border: 0, display: 'block' }}
+            />
+          </div>
+        </div>
+      </section>
     </main>
   )
 }

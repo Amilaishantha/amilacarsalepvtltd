@@ -10,15 +10,40 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TaxCalculatorRouteImport } from './routes/tax-calculator'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as LocationRouteImport } from './routes/location'
+import { Route as ImportFromJapanRouteImport } from './routes/import-from-japan'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VehiclesIndexRouteImport } from './routes/vehicles/index'
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace/index'
+import { Route as BrandsIndexRouteImport } from './routes/brands/index'
+import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as VehiclesSlugRouteImport } from './routes/vehicles/$slug'
 import { Route as MarketplaceVehicleIdRouteImport } from './routes/marketplace/$vehicleId'
+import { Route as BrandsBrandRouteImport } from './routes/brands/$brand'
+import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 
 const TaxCalculatorRoute = TaxCalculatorRouteImport.update({
   id: '/tax-calculator',
   path: '/tax-calculator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LocationRoute = LocationRouteImport.update({
+  id: '/location',
+  path: '/location',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImportFromJapanRoute = ImportFromJapanRouteImport.update({
+  id: '/import-from-japan',
+  path: '/import-from-japan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -26,9 +51,19 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VehiclesIndexRoute = VehiclesIndexRouteImport.update({
+  id: '/vehicles/',
+  path: '/vehicles/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
@@ -36,9 +71,24 @@ const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
   path: '/marketplace/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BrandsIndexRoute = BrandsIndexRouteImport.update({
+  id: '/brands/',
+  path: '/brands/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VehiclesSlugRoute = VehiclesSlugRouteImport.update({
+  id: '/vehicles/$slug',
+  path: '/vehicles/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketplaceVehicleIdRoute = MarketplaceVehicleIdRouteImport.update({
@@ -46,66 +96,146 @@ const MarketplaceVehicleIdRoute = MarketplaceVehicleIdRouteImport.update({
   path: '/marketplace/$vehicleId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BrandsBrandRoute = BrandsBrandRouteImport.update({
+  id: '/brands/$brand',
+  path: '/brands/$brand',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
+  '/import-from-japan': typeof ImportFromJapanRoute
+  '/location': typeof LocationRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tax-calculator': typeof TaxCalculatorRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/brands/$brand': typeof BrandsBrandRoute
   '/marketplace/$vehicleId': typeof MarketplaceVehicleIdRoute
+  '/vehicles/$slug': typeof VehiclesSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/blog/': typeof BlogIndexRoute
+  '/brands/': typeof BrandsIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
+  '/vehicles/': typeof VehiclesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
+  '/import-from-japan': typeof ImportFromJapanRoute
+  '/location': typeof LocationRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tax-calculator': typeof TaxCalculatorRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/brands/$brand': typeof BrandsBrandRoute
   '/marketplace/$vehicleId': typeof MarketplaceVehicleIdRoute
+  '/vehicles/$slug': typeof VehiclesSlugRoute
   '/admin': typeof AdminIndexRoute
+  '/blog': typeof BlogIndexRoute
+  '/brands': typeof BrandsIndexRoute
   '/marketplace': typeof MarketplaceIndexRoute
+  '/vehicles': typeof VehiclesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
+  '/import-from-japan': typeof ImportFromJapanRoute
+  '/location': typeof LocationRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tax-calculator': typeof TaxCalculatorRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/brands/$brand': typeof BrandsBrandRoute
   '/marketplace/$vehicleId': typeof MarketplaceVehicleIdRoute
+  '/vehicles/$slug': typeof VehiclesSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/blog/': typeof BlogIndexRoute
+  '/brands/': typeof BrandsIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
+  '/vehicles/': typeof VehiclesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/contact'
+    | '/import-from-japan'
+    | '/location'
+    | '/sitemap.xml'
     | '/tax-calculator'
+    | '/blog/$slug'
+    | '/brands/$brand'
     | '/marketplace/$vehicleId'
+    | '/vehicles/$slug'
     | '/admin/'
+    | '/blog/'
+    | '/brands/'
     | '/marketplace/'
+    | '/vehicles/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
     | '/contact'
+    | '/import-from-japan'
+    | '/location'
+    | '/sitemap.xml'
     | '/tax-calculator'
+    | '/blog/$slug'
+    | '/brands/$brand'
     | '/marketplace/$vehicleId'
+    | '/vehicles/$slug'
     | '/admin'
+    | '/blog'
+    | '/brands'
     | '/marketplace'
+    | '/vehicles'
   id:
     | '__root__'
     | '/'
+    | '/about'
     | '/contact'
+    | '/import-from-japan'
+    | '/location'
+    | '/sitemap.xml'
     | '/tax-calculator'
+    | '/blog/$slug'
+    | '/brands/$brand'
     | '/marketplace/$vehicleId'
+    | '/vehicles/$slug'
     | '/admin/'
+    | '/blog/'
+    | '/brands/'
     | '/marketplace/'
+    | '/vehicles/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
   ContactRoute: typeof ContactRoute
+  ImportFromJapanRoute: typeof ImportFromJapanRoute
+  LocationRoute: typeof LocationRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TaxCalculatorRoute: typeof TaxCalculatorRoute
+  BlogSlugRoute: typeof BlogSlugRoute
+  BrandsBrandRoute: typeof BrandsBrandRoute
   MarketplaceVehicleIdRoute: typeof MarketplaceVehicleIdRoute
+  VehiclesSlugRoute: typeof VehiclesSlugRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  BlogIndexRoute: typeof BlogIndexRoute
+  BrandsIndexRoute: typeof BrandsIndexRoute
   MarketplaceIndexRoute: typeof MarketplaceIndexRoute
+  VehiclesIndexRoute: typeof VehiclesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -117,11 +247,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TaxCalculatorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/location': {
+      id: '/location'
+      path: '/location'
+      fullPath: '/location'
+      preLoaderRoute: typeof LocationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/import-from-japan': {
+      id: '/import-from-japan'
+      path: '/import-from-japan'
+      fullPath: '/import-from-japan'
+      preLoaderRoute: typeof ImportFromJapanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contact': {
       id: '/contact'
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -131,11 +289,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vehicles/': {
+      id: '/vehicles/'
+      path: '/vehicles'
+      fullPath: '/vehicles/'
+      preLoaderRoute: typeof VehiclesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketplace/': {
       id: '/marketplace/'
       path: '/marketplace'
       fullPath: '/marketplace/'
       preLoaderRoute: typeof MarketplaceIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/brands/': {
+      id: '/brands/'
+      path: '/brands'
+      fullPath: '/brands/'
+      preLoaderRoute: typeof BrandsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -145,6 +324,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vehicles/$slug': {
+      id: '/vehicles/$slug'
+      path: '/vehicles/$slug'
+      fullPath: '/vehicles/$slug'
+      preLoaderRoute: typeof VehiclesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketplace/$vehicleId': {
       id: '/marketplace/$vehicleId'
       path: '/marketplace/$vehicleId'
@@ -152,16 +338,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketplaceVehicleIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/brands/$brand': {
+      id: '/brands/$brand'
+      path: '/brands/$brand'
+      fullPath: '/brands/$brand'
+      preLoaderRoute: typeof BrandsBrandRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
   ContactRoute: ContactRoute,
+  ImportFromJapanRoute: ImportFromJapanRoute,
+  LocationRoute: LocationRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TaxCalculatorRoute: TaxCalculatorRoute,
+  BlogSlugRoute: BlogSlugRoute,
+  BrandsBrandRoute: BrandsBrandRoute,
   MarketplaceVehicleIdRoute: MarketplaceVehicleIdRoute,
+  VehiclesSlugRoute: VehiclesSlugRoute,
   AdminIndexRoute: AdminIndexRoute,
+  BlogIndexRoute: BlogIndexRoute,
+  BrandsIndexRoute: BrandsIndexRoute,
   MarketplaceIndexRoute: MarketplaceIndexRoute,
+  VehiclesIndexRoute: VehiclesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,7 +1,42 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
+import { breadcrumbLd, faqLd, pageHead, BUSINESS_ID } from '@/lib/seo'
+import { canonicalUrl, site } from '@/data/site'
+import { TAX_FAQS } from '@/data/faqs'
+import { OFFICIAL_SOURCES } from '@/data/articles'
+import { track } from '@/lib/analytics'
+import GeneralEnquiryForm from '@/components/GeneralEnquiryForm'
+import { Breadcrumbs, FaqList } from '@/components/ui'
+
+const CRUMBS = [
+  { name: 'Home', path: '/' },
+  { name: 'Vehicle import tax calculator', path: '/tax-calculator' },
+]
 
 export const Route = createFileRoute('/tax-calculator')({
+  head: ({ matches }) =>
+    pageHead({
+      path: '/tax-calculator',
+      matches,
+      title: 'Vehicle Import Tax Calculator Sri Lanka (XID, CID, VAT) | Amila Car Sale',
+      description:
+        'Free Sri Lanka vehicle import tax calculator. Estimate excise duty (XID), Customs Import Duty, surcharge, luxury tax, SSCL, VAT and VEL for cars imported from Japan, using Gazette XID rates.',
+      jsonLd: [
+        breadcrumbLd(CRUMBS),
+        faqLd(TAX_FAQS),
+        {
+          '@context': 'https://schema.org',
+          '@type': 'WebApplication',
+          name: 'Sri Lanka Vehicle Import Tax Calculator',
+          url: canonicalUrl('/tax-calculator'),
+          applicationCategory: 'FinanceApplication',
+          operatingSystem: 'Any',
+          isAccessibleForFree: true,
+          offers: { '@type': 'Offer', price: 0, priceCurrency: 'LKR' },
+          provider: { '@id': BUSINESS_ID, '@type': 'AutoDealer', name: site.name },
+        },
+      ],
+    }),
   component: TaxCalculatorPage,
 })
 
@@ -201,6 +236,7 @@ function TaxCalculatorPage() {
       vel: velV,
       total,
     })
+    track('tax_calculator_use', { vehicle_category: category, engine_cc: isEV ? undefined : ccV, motor_kw: isEV ? kwV : undefined })
   }
 
   function reset() {
@@ -233,7 +269,7 @@ function TaxCalculatorPage() {
     background: 'var(--dark-3)',
     border: '1px solid var(--border-light)',
     color: 'var(--text-primary)',
-    fontFamily: 'DM Sans, sans-serif',
+    fontFamily: 'var(--font-body)',
     fontSize: '0.88rem',
     outline: 'none',
     transition: 'border-color 0.2s ease',
@@ -252,65 +288,59 @@ function TaxCalculatorPage() {
   return (
     <main style={{ minHeight: '100vh' }}>
       {/* Page header */}
-      <div style={{
-        background: 'var(--dark-2)',
-        borderBottom: '1px solid var(--border)',
-        padding: '3.5rem 2rem 2.5rem',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        <div className="hero-orb" style={{ width: '400px', height: '400px', background: 'rgba(184,0,0,0.07)', top: '-150px', right: '10%' }} />
-        <div style={{ maxWidth: '1400px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
-          <div className="section-tag" style={{ marginBottom: '0.75rem' }}>Free Tool · Gazette XID Rates</div>
-          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2.2rem, 5vw, 3.5rem)', fontWeight: 700, margin: '0 0 0.75rem' }}>
-            Sri Lanka Vehicle Import Tax Calculator
-          </h1>
-          <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.92rem', maxWidth: '600px', lineHeight: 1.7 }}>
-            Calculate XID, CID, SUR, SSCL, VAT, Luxury Tax, and VEL based on the latest gazette rates. Direct importers since establishment — Amila Car Sale Pvt Ltd, Bandarawela.
+      <header className="page-header no-print">
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ marginBottom: '1.25rem' }}><Breadcrumbs items={CRUMBS} /></div>
+          <div className="section-tag" style={{ marginBottom: '0.75rem' }}>Free tool · Gazette XID rates</div>
+          <h1 className="h1">Vehicle Import Tax Calculator — Sri Lanka</h1>
+          <p className="lead">
+            Estimate the import tax on a car from Japan: excise duty (XID), Customs Import Duty (CID), surcharge, luxury tax, SSCL, VAT and VEL.
+            Enter the CIF value and engine capacity (or motor kW for electric vehicles) to see a full breakdown.
           </p>
+          <a href="#calculator" className="btn-gold" style={{ marginTop: '1.25rem' }}>Calculate your vehicle import taxes</a>
         </div>
-      </div>
+      </header>
 
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: '2rem', alignItems: 'start' }}>
+      <div id="calculator" className="container" style={{ paddingTop: '2rem', paddingBottom: '2rem', scrollMarginTop: '80px' }}>
+        <div className="layout-sidebar" style={{ gridTemplateColumns: 'minmax(0, 1fr) 420px' }}>
 
           {/* Input form */}
           <div>
             <div style={{ background: 'var(--dark-2)', border: '1px solid var(--border)', padding: '2rem', marginBottom: '1.5rem' }}>
-              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 600, marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-                Vehicle Details
-              </div>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem', fontWeight: 700, margin: '0 0 1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
+                Vehicle details
+              </h2>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.25rem' }}>
                 {/* Category */}
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={labelStyle}>Vehicle Category</label>
-                  <select value={category} onChange={e => setCategory(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+                  <label style={labelStyle} htmlFor="tc-category">Vehicle Category</label>
+                  <select id="tc-category" value={category} onChange={e => setCategory(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
                     {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                   </select>
                 </div>
 
                 {/* CIF */}
                 <div>
-                  <label style={labelStyle}>CIF Value (LKR)</label>
-                  <input type="number" value={cif} onChange={e => setCif(e.target.value)} placeholder="e.g. 5000000" style={inputStyle} />
+                  <label style={labelStyle} htmlFor="tc-cif">CIF Value (LKR)</label>
+                  <input id="tc-cif" inputMode="decimal" type="number" value={cif} onChange={e => setCif(e.target.value)} placeholder="e.g. 5000000" style={inputStyle} />
                 </div>
 
                 {/* CC or kW */}
                 {!isEV ? (
                   <div>
-                    <label style={labelStyle}>Engine Capacity (CC)</label>
-                    <input type="number" value={cc} onChange={e => setCc(e.target.value)} placeholder="e.g. 1500" style={inputStyle} />
+                    <label style={labelStyle} htmlFor="tc-cc">Engine Capacity (CC)</label>
+                    <input id="tc-cc" inputMode="numeric" type="number" value={cc} onChange={e => setCc(e.target.value)} placeholder="e.g. 1500" style={inputStyle} />
                   </div>
                 ) : (
                   <>
                     <div>
-                      <label style={labelStyle}>Motor Power (kW)</label>
-                      <input type="number" value={kw} onChange={e => setKw(e.target.value)} placeholder="e.g. 100" style={inputStyle} />
+                      <label style={labelStyle} htmlFor="tc-kw">Motor Power (kW)</label>
+                      <input id="tc-kw" inputMode="numeric" type="number" value={kw} onChange={e => setKw(e.target.value)} placeholder="e.g. 100" style={inputStyle} />
                     </div>
                     <div>
-                      <label style={labelStyle}>EV Condition</label>
-                      <select value={evAge} onChange={e => setEvAge(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+                      <label style={labelStyle} htmlFor="tc-evage">EV Condition</label>
+                      <select id="tc-evage" value={evAge} onChange={e => setEvAge(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
                         <option value="brandnew">Brand New / 1 Year</option>
                         <option value="used">Used / More than 1 Year</option>
                       </select>
@@ -322,10 +352,10 @@ function TaxCalculatorPage() {
 
             {/* Rate overrides */}
             <div style={{ background: 'var(--dark-2)', border: '1px solid var(--border)', padding: '2rem', marginBottom: '1.5rem' }}>
-              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 600, marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-                Tax Rates
-                <span style={{ fontSize: '0.85rem', fontWeight: 400, color: 'var(--text-muted)', marginLeft: '0.75rem', fontStyle: 'italic' }}>pre-filled with current defaults</span>
-              </div>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem', fontWeight: 700, margin: '0 0 1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
+                Tax rates
+                <span style={{ fontSize: '0.82rem', fontWeight: 400, color: 'var(--text-muted)', marginLeft: '0.75rem', fontFamily: 'var(--font-body)' }}>pre-filled with current defaults</span>
+              </h2>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.25rem' }}>
                 {[
                   { label: 'CID %', value: cidRate, set: setCidRate },
@@ -335,8 +365,8 @@ function TaxCalculatorPage() {
                   { label: 'VEL (LKR)', value: vel, set: setVel },
                 ].map(({ label, value, set }) => (
                   <div key={label}>
-                    <label style={labelStyle}>{label}</label>
-                    <input type="number" value={value} onChange={e => set(e.target.value)} step="0.01" style={inputStyle} />
+                    <label style={labelStyle} htmlFor={`tc-${label.replace(/\W+/g, '-')}`}>{label}</label>
+                    <input id={`tc-${label.replace(/\W+/g, '-')}`} type="number" value={value} onChange={e => set(e.target.value)} step="0.01" style={inputStyle} />
                   </div>
                 ))}
               </div>
@@ -344,17 +374,17 @@ function TaxCalculatorPage() {
 
             {/* Currency converter */}
             <div style={{ background: 'var(--dark-2)', border: '1px solid var(--border)', padding: '2rem', marginBottom: '1.5rem' }}>
-              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 600, marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-                Currency Converter <span style={{ fontSize: '0.85rem', fontWeight: 400, color: 'var(--text-muted)', fontStyle: 'italic' }}>(optional)</span>
-              </div>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem', fontWeight: 700, margin: '0 0 1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
+                Currency converter <span style={{ fontSize: '0.82rem', fontWeight: 400, color: 'var(--text-muted)', fontFamily: 'var(--font-body)' }}>(optional)</span>
+              </h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1rem' }}>
                 <div>
-                  <label style={labelStyle}>JPY/USD to LKR Rate</label>
-                  <input type="number" value={fx} onChange={e => setFx(e.target.value)} placeholder="e.g. 0.50" step="0.0001" style={inputStyle} />
+                  <label style={labelStyle} htmlFor="tc-fx">JPY/USD to LKR Rate</label>
+                  <input id="tc-fx" type="number" value={fx} onChange={e => setFx(e.target.value)} placeholder="e.g. 0.50" step="0.0001" style={inputStyle} />
                 </div>
                 <div>
-                  <label style={labelStyle}>Foreign CIF Amount</label>
-                  <input type="number" value={foreignCif} onChange={e => setForeignCif(e.target.value)} placeholder="e.g. 3500000" style={inputStyle} />
+                  <label style={labelStyle} htmlFor="tc-fcif">Foreign CIF Amount</label>
+                  <input id="tc-fcif" type="number" value={foreignCif} onChange={e => setForeignCif(e.target.value)} placeholder="e.g. 3500000" style={inputStyle} />
                 </div>
               </div>
               <button onClick={convertCIF} style={{
@@ -367,7 +397,7 @@ function TaxCalculatorPage() {
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
                 cursor: 'pointer',
-                fontFamily: 'DM Sans, sans-serif',
+                fontFamily: 'var(--font-body)',
                 transition: 'background 0.2s ease',
               }}>
                 Convert → Fill CIF
@@ -397,7 +427,7 @@ function TaxCalculatorPage() {
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
                 cursor: 'pointer',
-                fontFamily: 'DM Sans, sans-serif',
+                fontFamily: 'var(--font-body)',
                 transition: 'color 0.2s ease',
               }}>
                 Reset
@@ -406,7 +436,7 @@ function TaxCalculatorPage() {
           </div>
 
           {/* Results panel */}
-          <div style={{ position: 'sticky', top: '90px' }}>
+          <aside aria-label="Tax breakdown" aria-live="polite">
             {!result ? (
               <div style={{
                 background: 'var(--dark-2)',
@@ -417,7 +447,7 @@ function TaxCalculatorPage() {
                 <svg style={{ color: 'var(--text-dim)', marginBottom: '1rem' }} width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
                   <path d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                 </svg>
-                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: 'var(--text-dim)', marginBottom: '0.5rem' }}>No calculation yet</div>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: 'var(--text-muted)', margin: '0 0 0.5rem' }}>No calculation yet</h2>
                 <p style={{ color: 'var(--text-dim)', fontSize: '0.82rem', lineHeight: 1.6, margin: 0 }}>
                   Fill in the vehicle details and press Calculate Import Tax to see a full breakdown.
                 </p>
@@ -426,7 +456,7 @@ function TaxCalculatorPage() {
               <div style={{ background: 'var(--dark-2)', border: '1px solid var(--border)' }}>
                 {/* Result header */}
                 <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 600, marginBottom: '0.25rem' }}>Tax Breakdown</div>
+                  <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 700, margin: '0 0 0.25rem' }}>Tax breakdown</h2>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{result.category}</div>
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '0.25rem' }}>HS: {result.hs} · Rate: {result.xidRate}</div>
                 </div>
@@ -452,7 +482,7 @@ function TaxCalculatorPage() {
                       gap: '1rem',
                     }}>
                       <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>{label}</span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: highlight ? 'var(--gold)' : 'var(--text-primary)', whiteSpace: 'nowrap', fontFamily: 'DM Mono, monospace' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: highlight ? 'var(--gold)' : 'var(--text-primary)', whiteSpace: 'nowrap', fontFamily: 'var(--font-body)' }}>
                         {money(value)}
                       </span>
                     </div>
@@ -469,8 +499,8 @@ function TaxCalculatorPage() {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                 }}>
-                  <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 700 }}>Total Import Tax</span>
-                  <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 700, color: 'var(--gold)' }}>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 700 }}>Total Import Tax</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--gold)' }}>
                     {money(result.total)}
                   </span>
                 </div>
@@ -487,7 +517,7 @@ function TaxCalculatorPage() {
                     letterSpacing: '0.05em',
                     textTransform: 'uppercase',
                     cursor: 'pointer',
-                    fontFamily: 'DM Sans, sans-serif',
+                    fontFamily: 'var(--font-body)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -506,7 +536,7 @@ function TaxCalculatorPage() {
                     letterSpacing: '0.05em',
                     textTransform: 'uppercase',
                     cursor: 'pointer',
-                    fontFamily: 'DM Sans, sans-serif',
+                    fontFamily: 'var(--font-body)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -529,32 +559,181 @@ function TaxCalculatorPage() {
               This is an estimate based on the latest XID gazette rates. Final duty payable may vary based on Customs valuation, exchange rates, HS classification, vehicle age, and any subsequent Gazette updates.
             </div>
 
-            {/* Contact CTA */}
-            <div style={{ background: 'var(--dark-2)', border: '1px solid var(--border)', padding: '1.5rem', marginTop: '1rem' }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Need help with the import process?</div>
-              <p style={{ color: 'var(--text-dim)', fontSize: '0.78rem', lineHeight: 1.6, margin: '0 0 0.75rem' }}>Contact our team for personalized assistance and a full landed cost quote.</p>
-              <a href="tel:+94754543533" style={{ color: 'var(--gold)', fontSize: '0.82rem', fontWeight: 700, textDecoration: 'none' }}>
-                Call: 075 454 3533 →
-              </a>
+            {/* Link the calculation to the import enquiry process */}
+            <div className="no-print" style={{ marginTop: '1rem' }}>
+              <GeneralEnquiryForm
+                key={result ? `${result.category}-${result.cif}-${result.total}` : 'empty'}
+                source="tax-calculator"
+                heading={result ? 'Get a confirmed landed-cost quote' : 'Need help with the import process?'}
+                intro={result ? 'Send this calculation to our team and we will confirm the full landed cost and find matching vehicles in Japan.' : `Contact our team for a full landed-cost quote — or call ${site.phoneDisplay}.`}
+                showVehicleField
+                context={result ? [
+                  '*— Tax calculation —*',
+                  `*Category:* ${result.category}`,
+                  `*HS:* ${result.hs} · ${result.xidRate}`,
+                  `*CIF:* ${money(result.cif)}`,
+                  `*Estimated total import tax:* ${money(result.total)}`,
+                ].join('\n') : undefined}
+              />
             </div>
-          </div>
+          </aside>
         </div>
       </div>
 
+      <TaxGuide />
+
       <style>{`
-        @media (max-width: 900px) {
-          main > div:last-child > div {
-            grid-template-columns: 1fr !important;
-          }
-          main > div:last-child > div > div:last-child {
-            position: static !important;
-          }
+        @media (max-width: 960px) {
+          #calculator .layout-sidebar { grid-template-columns: 1fr !important; }
         }
         @media print {
-          nav, footer { display: none !important; }
+          nav, footer, .no-print, .mobile-bar, .tax-guide { display: none !important; }
           body { background: white !important; color: black !important; }
         }
       `}</style>
     </main>
+  )
+}
+
+// ─────────────────────────── Educational content (SEO) ───────────────────────────
+
+const BANDS: { label: string; cc: number }[] = [
+  { label: 'Up to 660 cc', cc: 660 },
+  { label: '661 – 1,000 cc', cc: 1000 },
+  { label: '1,001 – 1,300 cc', cc: 1300 },
+  { label: '1,301 – 1,500 cc', cc: 1500 },
+  { label: '1,501 – 1,600 cc', cc: 1600 },
+  { label: '1,601 – 1,800 cc', cc: 1800 },
+  { label: '1,801 – 2,000 cc', cc: 2000 },
+  { label: '2,001 – 2,500 cc', cc: 2500 },
+  { label: '2,501 – 2,750 cc', cc: 2750 },
+  { label: '2,751 – 3,000 cc', cc: 3000 },
+  { label: '3,001 – 4,000 cc', cc: 4000 },
+  { label: 'Over 4,000 cc', cc: 4001 },
+]
+
+const EXPLAINERS: { id: string; title: string; body: React.ReactNode }[] = [
+  {
+    id: 'cif',
+    title: 'CIF value',
+    body: (
+      <>
+        CIF means <strong>Cost, Insurance and Freight</strong> — the vehicle price in Japan plus marine insurance and shipping to Sri Lanka, converted to rupees.
+        Most import taxes are calculated from it. Use the currency converter above if your price is in yen or dollars, and see{' '}
+        <Link to="/blog/$slug" params={{ slug: 'how-to-calculate-cif-value' }}>how to calculate CIF value</Link>.
+      </>
+    ),
+  },
+  {
+    id: 'xid',
+    title: 'Excise duty (XID)',
+    body: (
+      <>
+        Excise duty is usually the largest component. For petrol, diesel and hybrid vehicles it is charged per cc of engine capacity (fixed per-unit amounts apply to some
+        small-engine and commercial categories). For electric vehicles it is charged per kW of motor power, at different rates for brand-new and older vehicles.
+      </>
+    ),
+  },
+  { id: 'cid', title: 'Customs Import Duty (CID)', body: <>A percentage of the CIF value. The calculator pre-fills 20% — change it if the applicable rate differs.</> },
+  { id: 'sur', title: 'Surcharge (SUR)', body: <>A surcharge calculated as a percentage of the Customs Import Duty (not of CIF). The calculator pre-fills 50% of CID.</> },
+  {
+    id: 'luxury',
+    title: 'Luxury tax',
+    body: (
+      <>
+        Applies only when the CIF value is above the threshold for the vehicle category (thresholds differ for petrol, diesel, hybrid and electric vehicles). It is charged on the
+        amount above the threshold, multiplied by the category rate. Many everyday vehicles pay no luxury tax.
+      </>
+    ),
+  },
+  { id: 'sscl', title: 'SSCL', body: <>The Social Security Contribution Levy, calculated on CIF plus XID, CID, surcharge and luxury tax. Pre-filled at 2.5%.</> },
+  { id: 'vat', title: 'VAT', body: <>Value Added Tax, calculated on CIF with a 10% uplift plus the duties above and SSCL. Pre-filled at 18%.</> },
+  { id: 'vel', title: 'VEL and other levies', body: <>VEL is a fixed levy per vehicle, pre-filled at Rs. 15,000. Port, clearing and registration charges are separate and are not included in the calculator total.</> },
+]
+
+function TaxGuide() {
+  return (
+    <div className="tax-guide">
+      <section className="section-alt section" aria-labelledby="how-h">
+        <div className="container">
+          <div className="section-tag" style={{ marginBottom: '0.75rem' }}>Guide</div>
+          <h2 id="how-h" className="h2">How vehicle import tax is calculated in Sri Lanka</h2>
+          <p className="lead" style={{ marginBottom: '1.5rem' }}>The calculator follows these steps, in this order:</p>
+          <ol style={{ color: 'var(--text-muted)', lineHeight: 1.9, paddingLeft: '1.3rem', maxWidth: '72ch', margin: '0 0 2.5rem' }}>
+            <li><strong style={{ color: '#fff' }}>XID</strong> = engine capacity (cc) × rate for the category and band — or motor kW × EV rate</li>
+            <li><strong style={{ color: '#fff' }}>CID</strong> = CIF × CID %</li>
+            <li><strong style={{ color: '#fff' }}>Surcharge</strong> = CID × SUR %</li>
+            <li><strong style={{ color: '#fff' }}>Luxury tax</strong> = (CIF − category threshold) × category rate, if CIF exceeds the threshold</li>
+            <li><strong style={{ color: '#fff' }}>SSCL</strong> = (CIF + XID + CID + surcharge + luxury tax) × SSCL %</li>
+            <li><strong style={{ color: '#fff' }}>VAT</strong> = (CIF × 1.10 + XID + CID + surcharge + luxury tax + SSCL) × VAT %</li>
+            <li><strong style={{ color: '#fff' }}>Total import tax</strong> = XID + CID + surcharge + luxury tax + SSCL + VAT + VEL</li>
+          </ol>
+          <div className="grid-3">
+            {EXPLAINERS.map(e => (
+              <div key={e.id} id={e.id} className="card card-accent">
+                <h3 className="h3">{e.title}</h3>
+                <p className="muted prose" style={{ fontSize: '0.9rem', lineHeight: 1.7, margin: 0 }}>{e.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="container section" aria-labelledby="bands-h">
+        <h2 id="bands-h" className="h2">Excise duty by engine capacity</h2>
+        <p className="muted" style={{ maxWidth: '72ch', lineHeight: 1.8 }}>
+          The XID rates used by this calculator for passenger cars and station wagons, by engine capacity band. Hybrid and plug-in hybrid rates apply to the matching
+          hybrid categories. Rates are taken from the Gazette and updated only when a new Gazette is verified.
+        </p>
+        <div className="table-scroll prose" style={{ maxWidth: 'none' }}>
+          <table>
+            <thead>
+              <tr><th scope="col">Engine capacity</th><th scope="col">Petrol</th><th scope="col">Petrol hybrid</th><th scope="col">Diesel</th></tr>
+            </thead>
+            <tbody>
+              {BANDS.map(b => (
+                <tr key={b.label}>
+                  <td>{b.label}</td>
+                  <td>{getCCRate('petrol_car', b.cc).text}</td>
+                  <td>{getCCRate('petrol_hybrid', b.cc).text}</td>
+                  <td>{getCCRate('diesel_car', b.cc).text}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>
+          Electric vehicles: brand-new / up to 1 year — {getEVRate(50, 'brandnew').text} (≤50 kW), {getEVRate(100, 'brandnew').text} (≤100 kW), {getEVRate(200, 'brandnew').text} (≤200 kW), {getEVRate(201, 'brandnew').text} (over 200 kW).
+          Older than 1 year — {getEVRate(50, 'used').text}, {getEVRate(100, 'used').text}, {getEVRate(200, 'used').text}, {getEVRate(201, 'used').text} respectively.
+        </p>
+      </section>
+
+      <section className="section-alt section" aria-labelledby="tfaq-h">
+        <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(360px, 100%), 1fr))', gap: '2.5rem' }}>
+          <div>
+            <h2 id="tfaq-h" className="h2">Vehicle import tax FAQs</h2>
+            <FaqList faqs={TAX_FAQS} />
+          </div>
+          <div>
+            <h2 className="h2">Official sources</h2>
+            <ul style={{ lineHeight: 2, paddingLeft: '1.2rem', margin: '0 0 1.5rem' }}>
+              {[OFFICIAL_SOURCES.customs, OFFICIAL_SOURCES.gazettes, OFFICIAL_SOURCES.treasury, OFFICIAL_SOURCES.ird, OFFICIAL_SOURCES.cbsl, OFFICIAL_SOURCES.importControl].map(src => (
+                <li key={src.url}><a href={src.url} target="_blank" rel="noopener noreferrer" style={{ color: '#fff' }}>{src.label}</a></li>
+              ))}
+            </ul>
+            <h2 className="h3">Related guides</h2>
+            <ul style={{ lineHeight: 2, paddingLeft: '1.2rem', margin: '0 0 1.5rem' }}>
+              <li><Link to="/blog/$slug" params={{ slug: 'sri-lanka-vehicle-import-tax-explained' }} style={{ color: '#fff' }}>Sri Lanka vehicle import tax explained</Link></li>
+              <li><Link to="/blog/$slug" params={{ slug: 'how-to-import-a-car-from-japan-to-sri-lanka' }} style={{ color: '#fff' }}>How to import a car from Japan</Link></li>
+              <li><Link to="/blog/$slug" params={{ slug: 'sri-lanka-vehicle-import-regulations' }} style={{ color: '#fff' }}>Sri Lanka vehicle import regulations</Link></li>
+            </ul>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <a href="#calculator" className="btn-gold">Calculate your vehicle import taxes</a>
+              <Link to="/import-from-japan" className="btn-outline">Request an import</Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   )
 }

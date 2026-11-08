@@ -1,6 +1,3 @@
-headers = []
-redirects = []
-
 [build]
 publish = "dist/client"
 command = "vite build"
@@ -38,3 +35,48 @@ origin = "ui"
 package = "@netlify/plugin-lighthouse"
 
   [plugins.inputs]
+# ── Image CDN: allow the showroom's Cloudinary account so photos are resized and served as WebP/AVIF ──
+[images]
+  remote_images = ['https://res\.cloudinary\.com/ddnvaijcc/.*']
+
+# ── Duplicate host → canonical domain (deploy previews use a different host and are unaffected) ──
+[[redirects]]
+  from = "https://amilacarsalepvtltd.netlify.app/*"
+  to = "https://www.amilacarsalepvtltd.com/:splat"
+  status = 301
+  force = true
+
+# ── Caching & security headers ──
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/*.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "SAMEORIGIN"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/admin*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    Cache-Control = "no-store"

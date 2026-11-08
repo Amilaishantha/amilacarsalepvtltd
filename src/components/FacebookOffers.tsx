@@ -46,7 +46,7 @@ export default function FacebookOffers() {
           <div className="section-tag" style={{ marginBottom: '1rem' }}>Follow Us on Facebook</div>
           <h2
             style={{
-              fontFamily: 'Cormorant Garamond, serif',
+              fontFamily: 'var(--font-display)',
               fontSize: 'clamp(2rem, 4vw, 3rem)',
               fontWeight: 700,
               margin: '0 0 1rem',
@@ -377,7 +377,7 @@ function FacebookFallback({ compact = false }: { compact?: boolean }) {
       )}
       <h3
         style={{
-          fontFamily: 'Cormorant Garamond, serif',
+          fontFamily: 'var(--font-display)',
           fontSize: compact ? '1.25rem' : 'clamp(1.5rem, 4vw, 1.9rem)',
           fontWeight: 700,
           color: 'var(--gold)',
