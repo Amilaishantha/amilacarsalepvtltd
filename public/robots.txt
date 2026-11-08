@@ -1,0 +1,7 @@
+# Amila Car Sale Pvt Ltd — https://www.amilacarsalepvtltd.com
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /_serverFn/
+
+Sitemap: https://www.amilacarsalepvtltd.com/sitemap.xml
