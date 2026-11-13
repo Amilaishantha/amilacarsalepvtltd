@@ -764,12 +764,12 @@ function SettingsEditor({ settings, onSave }: { settings: PublicSettings; onSave
         <h2 className="h3">Search engines & analytics</h2>
         <p className="muted" style={{ fontSize: '0.84rem', lineHeight: 1.7, marginBottom: '1.25rem' }}>
           These are public IDs and verification tokens (they appear in the page HTML by design) — never paste passwords or API secrets here.
-          Leave a field blank to switch it off. Status: {s.ga4Id || s.gtmId ? 'analytics tag configured' : 'no analytics tag configured'} ·{' '}
+          Leave a field blank to switch it off. Status: {s.gtmId ? `Tag Manager ${s.gtmId}` : 'Tag Manager GTM-M8WQ4ZFQ (default)'}{s.ga4Id ? ` + GA4 ${s.ga4Id}` : ''} ·{' '}
           {s.googleVerification ? 'Google verification tag present (confirm “Verified” in Search Console)' : 'Google Search Console not set up'}.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
           <Field label="Google Analytics 4 measurement ID" hint="Looks like G-XXXXXXXXXX. Skip if you load GA4 through Tag Manager."><input value={s.ga4Id} onChange={e => setS({ ...s, ga4Id: e.target.value.trim().toUpperCase() })} placeholder="G-XXXXXXXXXX" style={inputStyle()} /></Field>
-          <Field label="Google Tag Manager container ID" hint="Looks like GTM-XXXXXXX"><input value={s.gtmId} onChange={e => setS({ ...s, gtmId: e.target.value.trim().toUpperCase() })} placeholder="GTM-XXXXXXX" style={inputStyle()} /></Field>
+          <Field label="Google Tag Manager container ID" hint="Looks like GTM-XXXXXXX. Leave blank to use the site's default container (GTM-M8WQ4ZFQ)."><input value={s.gtmId} onChange={e => setS({ ...s, gtmId: e.target.value.trim().toUpperCase() })} placeholder="GTM-XXXXXXX" style={inputStyle()} /></Field>
           <Field label="Google Search Console verification" hint='From the "HTML tag" method — paste only the content="…" value'><input value={s.googleVerification} onChange={e => setS({ ...s, googleVerification: e.target.value.trim() })} style={inputStyle()} /></Field>
           <Field label="Bing Webmaster verification" hint='From the msvalidate.01 meta tag — content value only'><input value={s.bingVerification} onChange={e => setS({ ...s, bingVerification: e.target.value.trim() })} style={inputStyle()} /></Field>
           <Field label="Google Business Profile / Maps link" hint="Used for “Get directions” and in structured data (sameAs)"><input value={s.googleBusinessUrl} onChange={e => setS({ ...s, googleBusinessUrl: e.target.value.trim() })} placeholder="https://maps.app.goo.gl/…" style={inputStyle()} /></Field>
