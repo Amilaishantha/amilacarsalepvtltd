@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { site, mapsUrl, whatsappLink } from '@/data/site'
 import { FacebookIcon } from '@/components/FacebookOffers'
 import { fetchPublicSettings, EMPTY_SETTINGS, type PublicSettings } from '@/lib/content-fns'
-import { analyticsScripts, installClickTracking } from '@/lib/analytics'
+import { analyticsScripts, installClickTracking, resolveGtmId } from '@/lib/analytics'
 import { PhoneIcon, WhatsAppIcon, PinIcon, MailIcon } from '@/components/ui'
 import { BRAND_PAGES } from '@/data/brands'
 
@@ -264,12 +264,24 @@ function NotFound() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   useEffect(() => installClickTracking(), [])
+  const gtmId = useRouterState({
+    select: s => resolveGtmId((s.matches[0]?.loaderData as { settings?: PublicSettings } | undefined)?.settings?.gtmId),
+  })
   return (
     <html lang="en-LK">
       <head>
         <HeadContent />
       </head>
       <body style={{ paddingTop: 'var(--nav-h)' }}>
+        <noscript>
+          <iframe
+            src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
+            height="0"
+            width="0"
+            style={{ display: 'none', visibility: 'hidden' }}
+            title="Google Tag Manager"
+          />
+        </noscript>
         <a href="#main" className="skip-link">Skip to content</a>
         <NavBar />
         {children}

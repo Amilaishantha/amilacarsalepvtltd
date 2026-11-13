@@ -45,10 +45,18 @@ export function installClickTracking() {
   return () => document.removeEventListener('click', handler, { capture: true })
 }
 
+/** Site-wide Google Tag Manager container. Used whenever no other container ID is saved in Admin → Settings. */
+export const DEFAULT_GTM_ID = 'GTM-M8WQ4ZFQ'
+
+/** The GTM container to load: the admin-configured one if valid, otherwise the default container. */
+export function resolveGtmId(gtmId?: string) {
+  return gtmId && /^GTM-[A-Z0-9]{4,15}$/.test(gtmId) ? gtmId : DEFAULT_GTM_ID
+}
+
 /** Inline bootstrap scripts for the configured tags (IDs are validated server-side before saving). */
 export function analyticsScripts(ids: { ga4Id?: string; gtmId?: string }) {
   const scripts: { src?: string; async?: boolean; children?: string }[] = []
-  const gtm = ids.gtmId && /^GTM-[A-Z0-9]{4,15}$/.test(ids.gtmId) ? ids.gtmId : ''
+  const gtm = resolveGtmId(ids.gtmId)
   const ga4 = ids.ga4Id && /^G-[A-Z0-9]{4,20}$/.test(ids.ga4Id) ? ids.ga4Id : ''
   if (gtm) {
     scripts.push({
